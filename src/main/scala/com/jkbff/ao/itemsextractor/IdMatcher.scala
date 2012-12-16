@@ -1,35 +1,25 @@
-package com.jkbff.ao
-import scala.util.parsing.input.StreamReader
-import javax.sql.DataSource
+package com.jkbff.ao.itemsextractor
+
+import java.io.PrintWriter
+import java.io.RandomAccessFile
+import java.sql.ResultSet
+
+import scala.io.Source
+
 import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
+
+import com.jkbff.ao.tyrbot.jdbc.FunctionalRowMapper
+import com.jkbff.ao.tyrbot.jdbc.GenericRowMapper
+import com.jkbff.ao.tyrbot.jdbc.Helper
 import com.jkbff.ao.tyrbot.jdbc.ScalaJdbcTemplate
 import com.jkbff.ao.tyrbot.jdbc.StringRowMapper
-import com.twitter.conversions.string
-import java.sql.ResultSet
-import com.jkbff.ao.tyrbot.jdbc.FunctionalRowMapper
-import java.util.Hashtable
-import com.jkbff.ao.tyrbot.jdbc.GenericRowMapper
-import scala.io.Source
-import java.nio.file.Path
-import java.io.File
-import java.io.PrintWriter
-import com.jkbff.ao.tyrbot.jdbc.Helper
 
-object BudabotItemsExtractor extends App {
+import javax.sql.DataSource
 
-	class Entry(val id: Int, val ql: Int, val name: String, val iconId: Int, val itemType: String) {
-		def this(rs: ResultSet) = this(rs.getInt("aoid"), rs.getInt("ql"), rs.getString("name"), rs.getInt("icon"), rs.getString("itemtype"))
-		
-		override def toString() = List(id, ql, name, iconId, itemType).toString
-	}
-	
-	class Entry2(val id: Int, val ql: Int, val name: String, val iconId: Int, val itemType: String) {
-		def this(rs: ResultSet) = this(rs.getInt("aoid"), rs.getInt("ql"), rs.getString("name"), rs.getInt("icon"), rs.getString("type"))
-	}
+class IdMatcher(entries: List[Entry]) {
 
 	val log = Logger.getLogger(this.getClass())
-	
 
 	val sqliteDs = {
 		val ds = new BasicDataSource()
@@ -50,30 +40,32 @@ object BudabotItemsExtractor extends App {
 		ds
 	}
 	
-	val outputdb = new DB(h2Ds)
-	val file = "output.sql"
-
-	val elapsed = Helper.stopwatch{
-		outputdb.update("DROP TABLE IF EXISTS entries")
-		outputdb.update("DROP TABLE IF EXISTS aodb")
-		outputdb.update("CREATE TABLE entries (aoid INT, ql INT, name TEXT, icon INT, itemtype TEXT, hash TEXT)")
-		outputdb.update("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT)")
-		
-		val sourceDb = new ScalaJdbcTemplate(getDatasource("jdbc:sqlite:aoitems.db"))
-		val entries = sourceDb.query("SELECT * FROM tblAO", new GenericRowMapper[Entry2])
+	def writeSqlFile() {
+		val outputdb = new DB(h2Ds)
+		val file = "output.sql"
 	
-		writeEntriesToDb(outputdb, entries)
+		val elapsed = Helper.stopwatch{
+			outputdb.update("DROP TABLE IF EXISTS entries")
+			outputdb.update("DROP TABLE IF EXISTS aodb")
+			outputdb.update("CREATE TABLE entries (aoid INT, ql INT, name TEXT, icon INT, itemtype TEXT, hash TEXT)")
+			outputdb.update("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT)")
+			
+			//val sourceDb = new ScalaJdbcTemplate(getDatasource("jdbc:sqlite:aoitems.db"))
+			//val entries = sourceDb.query("SELECT * FROM tblAO", new GenericRowMapper[Entry2])
 		
-		outputdb.update("CREATE INDEX idx_name ON entries (name)")
-		outputdb.update("CREATE INDEX idx_aoid ON entries (aoid)")
-		
-		processStaticList(outputdb, readEntriesFromFile("static_list.txt"))
-		processDeleteList(outputdb, readEntriesFromFile("delete_list.txt"))
-		processNameSeparations(outputdb, readEntriesFromFile("nameseperation_list.txt"))
-		processRemaingingEntries(outputdb)
-		outputSqlFile(outputdb, file)
+			writeEntriesToDb(outputdb, entries)
+			
+			outputdb.update("CREATE INDEX idx_name ON entries (name)")
+			outputdb.update("CREATE INDEX idx_aoid ON entries (aoid)")
+			
+			processStaticList(outputdb, readEntriesFromFile("static_list.txt"))
+			processDeleteList(outputdb, readEntriesFromFile("delete_list.txt"))
+			processNameSeparations(outputdb, readEntriesFromFile("nameseperation_list.txt"))
+			processRemaingingEntries(outputdb)
+			outputSqlFile(outputdb, file)
+		}
+		log.info("Elapsed time: %ds".format(elapsed / 1000))
 	}
-	log.info("Elapsed time: %ds".format(elapsed / 1000))
 
 	def getDatasource(url: String): DataSource = {
 		val ds = new BasicDataSource()
@@ -314,7 +306,7 @@ object BudabotItemsExtractor extends App {
 		//log.debug(sql)
 	}
 
-	def writeEntriesToDb(db: DB, entries: List[Entry2]) {
+	def writeEntriesToDb(db: DB, entries: List[Entry]) {
 		//db.startTransaction()
 		log.debug("writing %d entries".format(entries.size))
 		entries foreach { entry =>
@@ -337,12 +329,6 @@ object BudabotItemsExtractor extends App {
 		
 		writer.println("DROP TABLE IF EXISTS aodb;")
         writer.println("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT);")
-        
-        class Item(val lowId: Int, val highId: Int, val lowQl: Int, val highQl: Int, val name: String, val icon: Int) {
-        	def this(rs: ResultSet) = this(rs.getInt("lowid"), rs.getInt("highid"), rs.getInt("lowql"), rs.getInt("highql"), rs.getString("name"), rs.getInt("icon"))
-        	
-        	override def toString() = List(lowId, highId, lowQl, highQl, name, icon).toString()
-        }
 
         val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", new GenericRowMapper[Item])
 

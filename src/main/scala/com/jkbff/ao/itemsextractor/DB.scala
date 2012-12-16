@@ -1,13 +1,13 @@
-package com.jkbff.ao
-import java.sql.Connection
-import org.springframework.jdbc.core.RowMapper
-import com.jkbff.ao.tyrbot.jdbc.Helper._
-import org.springframework.dao.EmptyResultDataAccessException
+package com.jkbff.ao.itemsextractor
+
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import com.jkbff.ao.tyrbot.jdbc.ScalaJdbcTemplate
+
+import org.springframework.jdbc.core.RowMapper
+
+import com.jkbff.ao.tyrbot.jdbc.Helper.using
+
 import javax.sql.DataSource
-import scala.collection.Map
 
 class DB(ds: DataSource) {
 	val connection = ds.getConnection()

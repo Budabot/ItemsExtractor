@@ -1,62 +1,62 @@
-aoid = '0'
+aoid = 0
 icon = 0
-ql = ''
-ql = '-1'
-aoid = '246633'
-aoid = '246634'
+ql = 0
+ql = -1
+aoid = 246633
+aoid = 246634
 itemtype = 'NPC'
 name = ''
 name = '_'
-name LIKE '%_001'
-name LIKE '%_004'
-name LIKE '%testitem%'
-name LIKE 'Charged Nano Critter - %'
-name LIKE 'Charged Nano Finger - %'
-name LIKE 'Pill with %'
-name LIKE 'Blister Pack with %'
-name LIKE '%Implant:%'
-name LIKE 'A % Implant%'
-name LIKE '%dummy%'
-name LIKE '%Delta % (type _)'
-name LIKE '%Digamma%'
-name LIKE '%test%' AND name LIKE '%item%'
-name LIKE '% CLONE'
-name LIKE '% (%replica)'
-name LIKE 'Replica Armor Set:%'
-name LIKE 'Nano Can: %'
-name LIKE '% - Nano Can'
-name LIKE 'Dust Brigade Assistance Module' AND ql > '250'
-name LIKE '%Symbiant, % Unit Aban' AND aoid < 220300 AND aoid > 219139
-name LIKE '%Symbiant, % Unit Aban' AND aoid < 219124
-name LIKE 'Kyr''Ozch %' AND aoid >= '247245' AND aoid <= '247672'
-name LIKE '% construction kit'
-name LIKE '% construction manual'
-name LIKE 'compiled algorithm (%'
-name LIKE 'instruction disc (%'
-name LIKE 'programmed photon particle emitter (%'
-name LIKE 'unfinished %'
-name LIKE 'balanced bracelet blueprints'
-name LIKE 'engineer %' AND name LIKE '% shell'
-name LIKE 'bureaucrat %' AND name LIKE '% shell'
-name LIKE 'cracked %' AND name LIKE '% jewel of %'
-name LIKE 'uncut %' AND name LIKE '% jewel of %'
-name LIKE 'boss modifier item (%'
-name LIKE 'aban pattern of %'
-name LIKE 'abhan pattern %'
-name LIKE 'bhotaar pattern %'
-name LIKE 'chi pattern of %'
-name LIKE 'dom pattern of %'
-name LIKE 'aban-bhotar assembly%'
-name LIKE 'aban-bhotar-chi assembly%'
-name LIKE 'complete blueprint pattern of %'
-name LIKE 'complete blueptrint pattern of %'
-name LIKE 'notum crystal with etched %'
-name LIKE 'novictalized notum crystal with %'
-name LIKE 'fashion kit - %'
-name LIKE '% Management Benefit'
-name LIKE '%Construction Kit%'
+UPPER(name) LIKE '%_001'
+UPPER(name) LIKE '%_004'
+UPPER(name) LIKE UPPER('%testitem%')
+UPPER(name) LIKE UPPER('Charged Nano Critter - %')
+UPPER(name) LIKE UPPER('Charged Nano Finger - %')
+UPPER(name) LIKE UPPER('Pill with %')
+UPPER(name) LIKE UPPER('Blister Pack with %')
+UPPER(name) LIKE UPPER('%Implant:%')
+UPPER(name) LIKE UPPER('A % Implant%')
+UPPER(name) LIKE UPPER('%dummy%')
+UPPER(name) LIKE UPPER('%Delta % (type _)')
+UPPER(name) LIKE UPPER('%Digamma%')
+UPPER(name) LIKE UPPER('%test%') AND UPPER(name) LIKE UPPER('%item%')
+UPPER(name) LIKE UPPER('% CLONE')
+UPPER(name) LIKE UPPER('% (%replica)')
+UPPER(name) LIKE UPPER('Replica Armor Set:%')
+UPPER(name) LIKE UPPER('Nano Can: %')
+UPPER(name) LIKE UPPER('% - Nano Can')
+UPPER(name) LIKE UPPER('Dust Brigade Assistance Module') AND ql > 250
+UPPER(name) LIKE UPPER('%Symbiant, % Unit Aban') AND aoid < 220300 AND aoid > 219139
+UPPER(name) LIKE UPPER('%Symbiant, % Unit Aban') AND aoid < 219124
+UPPER(name) LIKE UPPER('Kyr''Ozch %') AND aoid >= 247245 AND aoid <= 247672
+UPPER(name) LIKE UPPER('% construction kit')
+UPPER(name) LIKE UPPER('% construction manual')
+UPPER(name) LIKE UPPER('compiled algorithm (%')
+UPPER(name) LIKE UPPER('instruction disc (%')
+UPPER(name) LIKE UPPER('programmed photon particle emitter (%')
+UPPER(name) LIKE UPPER('unfinished %')
+UPPER(name) LIKE UPPER('balanced bracelet blueprints')
+UPPER(name) LIKE UPPER('engineer %') AND UPPER(name) LIKE UPPER('% shell')
+UPPER(name) LIKE UPPER('bureaucrat %') AND UPPER(name) LIKE UPPER('% shell')
+UPPER(name) LIKE UPPER('cracked %') AND UPPER(name) LIKE UPPER('% jewel of %')
+UPPER(name) LIKE UPPER('uncut %') AND UPPER(name) LIKE UPPER('% jewel of %')
+UPPER(name) LIKE UPPER('boss modifier item (%')
+UPPER(name) LIKE UPPER('aban pattern of %')
+UPPER(name) LIKE UPPER('abhan pattern %')
+UPPER(name) LIKE UPPER('bhotaar pattern %')
+UPPER(name) LIKE UPPER('chi pattern of %')
+UPPER(name) LIKE UPPER('dom pattern of %')
+UPPER(name) LIKE UPPER('aban-bhotar assembly%')
+UPPER(name) LIKE UPPER('aban-bhotar-chi assembly%')
+UPPER(name) LIKE UPPER('complete blueprint pattern of %')
+UPPER(name) LIKE UPPER('complete blueptrint pattern of %')
+UPPER(name) LIKE UPPER('notum crystal with etched %')
+UPPER(name) LIKE UPPER('novictalized notum crystal with %')
+UPPER(name) LIKE UPPER('fashion kit - %')
+UPPER(name) LIKE UPPER('% Management Benefit')
+UPPER(name) LIKE UPPER('%Construction Kit%')
 name = 'Door'
-name LIKE 'NPC%'
+UPPER(name) LIKE UPPER('NPC%')
 name = 'Bracelet of Arul Saba'
 name = 'Martial Arts Item'
 name = 'Resistance Item'
@@ -66,24 +66,24 @@ name = 'Heal'
 name = 'Treasure'
 name = 'Junk'
 name = 'Totem'
-name LIKE '%ingot'
+UPPER(name) LIKE UPPER('%ingot')
 name = 'Izgimmer-modified Cyberdeck'
-name LIKE 'Affected by%'
-name LIKE 'Blessed by%'
-name LIKE 'Blood of%'
-name LIKE 'cast_nano%'
-name LIKE 'cast_modify%'
-name LIKE 'AI Nanodamagemultiplier%'
-name LIKE 'Anim Action%'
-name LIKE 'knutj multiitem%'
-name LIKE 'Badly Corroded Crystal %'
-name LIKE 'Badly Eroded Crystal %'
+UPPER(name) LIKE UPPER('Affected by%')
+UPPER(name) LIKE UPPER('Blessed by%')
+UPPER(name) LIKE UPPER('Blood of%')
+UPPER(name) LIKE UPPER('cast_nano%')
+UPPER(name) LIKE UPPER('cast_modify%')
+UPPER(name) LIKE UPPER('AI Nanodamagemultiplier%')
+UPPER(name) LIKE UPPER('Anim Action%')
+UPPER(name) LIKE UPPER('knutj multiitem%')
+UPPER(name) LIKE UPPER('Badly Corroded Crystal %')
+UPPER(name) LIKE UPPER('Badly Eroded Crystal %')
 name = 'Bio Rejuvenation'
-name LIKE 'Blood Stained and Corroded Crystal %'
+UPPER(name) LIKE UPPER('Blood Stained and Corroded Crystal %')
 name = 'Called Shot'
-name LIKE 'Corroded Crystal with Bullet Holes %'
-name LIKE 'Cracked Crystal %'
-name LIKE 'Cracked and Miskept Shadow Crystal %'
-name LIKE 'Hacked Blister Pack with %'
-name LIKE 'Hacked Charged Nano Critter %'
-name LIKE 'Hacked Corroded Crystal %'
+UPPER(name) LIKE UPPER('Corroded Crystal with Bullet Holes %')
+UPPER(name) LIKE UPPER('Cracked Crystal %')
+UPPER(name) LIKE UPPER('Cracked and Miskept Shadow Crystal %')
+UPPER(name) LIKE UPPER('Hacked Blister Pack with %')
+UPPER(name) LIKE UPPER('Hacked Charged Nano Critter %')
+UPPER(name) LIKE UPPER('Hacked Corroded Crystal %')

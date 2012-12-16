@@ -1,22 +1,16 @@
-package com.jkbff.ao
-import java.io.FileInputStream
-import java.io.DataInputStream
-import org.apache.poi.util.LittleEndian
+package com.jkbff.ao.itemsextractor
+
 import java.io.RandomAccessFile
-import com.sun.xml.internal.ws.api.pipe.NextAction
+
+import org.apache.poi.util.LittleEndian
+
+import RDBFunctions._
 
 object RDBIndexReader extends App {
-	getResourceTypeMap("ResourceDatabase.idx")
-	
 	val AODB_ITEM_TYPE = 0x000f4254
-	
-	class Record(val resourceType: Long, val resourceId: Long, val offset: Long) {
-		override def toString() = "resourceType: " + resourceType + " resourceId: " + resourceId + " offset: " + offset
-	}
 	
 	class Index(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: List[Record]) {
 		
-		val hi = records.foldLeft("") { (output, record) => record.toString }
 		override def toString() = {
 			"offset: " + offset +
 			"\nnextBlock: " + nextBlock +
@@ -25,9 +19,7 @@ object RDBIndexReader extends App {
 		}
 	}
 	
-	def getResourceTypeMap(filename: String): Map[Long, List[Record]] = {
-		val in = new RandomAccessFile(filename, "r")
-		
+	def getResourceTypeMap(in: RandomAccessFile): Map[Long, List[Record]] = {
 		//println("last offset: " + readLittleEndianInt(in))
 		//println("data end: " + readLittleEndianInt(in))
 		//println("block size: " + readLittleEndianInt(in))
@@ -51,18 +43,6 @@ object RDBIndexReader extends App {
 			nextBlock = index.nextBlock
 		}
 		indexes.reverse
-	}
-	
-	def readLittleEndianInt(in: RandomAccessFile): Long = {
-		val b = new Array[Byte](4)
-		in.read(b)
-		LittleEndian.getUInt(b)
-	}
-	
-	def readLittleEndianShort(in: RandomAccessFile): Long = {
-		val b = new Array[Byte](2)
-		in.read(b)
-		LittleEndian.getUShort(b)
 	}
 	
 	def readIndexBlock(in: RandomAccessFile): Index = {
