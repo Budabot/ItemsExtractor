@@ -1,0 +1,17 @@
+Omni Life%,Quality Omni Life%,Armor
+Quality Omni Life%,Advanced Omni Life%,Armor
+Advanced Omni Life%,Advanced Omni Life%,Armor
+Omni-Pol Trooper%,Quality Omni-Pol Trooper%,Armor
+Quality Omni-Pol Trooper%,Advanced Omni-Pol Trooper%,Armor
+Basic %,Augmented %,Armor
+Battered %,Enhanced %,Armor
+Inferior %,Flawless %,Armor
+Recruit-Issue %,Assault-Issue %,Armor
+Senpai % ,Hanshi %,Armor
+Worn %,High-Quality %,Armor
+Black Organic %,Advanced Black Organic %,Armor
+Blue Organic %,Advanced Blue Organic %,Armor
+Turquoise Organic %,Advanced Turquoise Organic %,Armor
+Soft %,Thick% ,Armor
+Overtuned Worn %,Overtuned High-Quality %,Armor
+Da Taunter!,Da Taunter!!,Armor
