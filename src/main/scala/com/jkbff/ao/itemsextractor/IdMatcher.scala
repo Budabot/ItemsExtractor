@@ -244,7 +244,6 @@ class IdMatcher(entries: List[Entry]) {
 		log.debug("Matching for: '" + entries(0).name + "' count: " + entries.size)
 		// if there is only one item, match it to itself
 		if (entries.size == 1) {
-			log.debug("One entry for: '" + entries(0).name + "'")
 			addItem(db, entries(0), entries(0))
 			return
 		}

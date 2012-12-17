@@ -11,14 +11,9 @@ import javax.sql.DataSource
 
 class DB(ds: DataSource) {
 	val connection = ds.getConnection()
-	
-	private def replaceSql(sql: String): String = {
-		val sql1 = sql.replaceAll(":[a-zA-Z0-9]+", "?")
-		sql1
-	}
 
 	def query[T](sql: String, params: Seq[Any], rowMapper: RowMapper[T]): List[T] = {
-		using(connection.prepareStatement(replaceSql(sql))) { stmt =>
+		using(connection.prepareStatement(sql)) { stmt =>
 			using(executeQuery(stmt, params)) { rs =>
 				var results = List[T]()
 				var j = 0
@@ -42,7 +37,7 @@ class DB(ds: DataSource) {
 	}
 	
 	def queryForObject[T](sql: String, params: Seq[Any], rowMapper: RowMapper[T]) = {
-		using(connection.prepareStatement(replaceSql(sql))) { stmt =>
+		using(connection.prepareStatement(sql)) { stmt =>
 			using(executeQuery(stmt, params)) { rs =>
 				if (rs.next()) {
 					Some(rowMapper.mapRow(rs, 1))
@@ -58,7 +53,7 @@ class DB(ds: DataSource) {
 	}
 	
 	def update(sql: String, params: Seq[Any]): Int = {
-		using(connection.prepareStatement(replaceSql(sql))) { stmt =>
+		using(connection.prepareStatement(sql)) { stmt =>
 			var i = 1
 			params foreach { param =>
 				stmt.setObject(i, param)
