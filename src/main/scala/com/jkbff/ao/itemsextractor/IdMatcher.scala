@@ -176,6 +176,13 @@ class IdMatcher(entries: List[Entry]) {
 					parms(2)
 				)
 			)
+			db.update(
+				"DELETE FROM entries WHERE aoid = ? AND ql = ?",
+				Seq(
+					parms(1),
+					parms(3)
+				)
+			)
 		}
 
 		//db.commitTransaction()
