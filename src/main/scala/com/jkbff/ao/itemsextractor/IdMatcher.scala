@@ -40,9 +40,8 @@ class IdMatcher(entries: List[Entry]) {
 		ds
 	}
 	
-	def writeSqlFile() {
+	def writeSqlFile(file: String) {
 		val outputdb = new DB(h2Ds)
-		val file = "output.sql"
 	
 		val elapsed = Helper.stopwatch{
 			outputdb.update("DROP TABLE IF EXISTS entries")
@@ -313,7 +312,7 @@ class IdMatcher(entries: List[Entry]) {
 				Seq(
 					entry.id,
 					entry.ql,
-					entry.name,
+					entry.name.trim,
 					entry.iconId,
 					entry.itemType
 				)
@@ -332,7 +331,7 @@ class IdMatcher(entries: List[Entry]) {
         val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", new GenericRowMapper[Item])
 
         items foreach { item =>
-            writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''").trim, item.icon))
+            writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''"), item.icon))
         }
         writer.close()
 	}
