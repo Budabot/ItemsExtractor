@@ -150,18 +150,18 @@ class IdMatcher(entries: List[Entry]) {
 		//db.startTransaction()
 		list foreach { parms =>
 			log.debug("Processing static entry: '" + parms(0) + "', '" + parms(1) + "', '" + parms(2) + "', '" + parms(3) + "'")
-			val low = db.queryForObject(
-				"SELECT * FROM entries WHERE aoid = ? AND ql = ?",
+			val result = db.queryForObject(
+				"SELECT * FROM entries WHERE aoid = ?",
 				Seq(
-					parms(0),
-					parms(2)
+					parms(0)
 				),
 				new GenericRowMapper[Entry]
 			)
 
-			if (low.isDefined) {
+			if (result.isDefined) {
+				val low = new Entry(parms(0).toInt, parms(2).toInt, result.get.name, result.get.iconId, result.get.itemType)
 				val high = new Entry(parms(1).toInt, parms(3).toInt, "", 0, "")
-				addItem(db, low.get, high)
+				addItem(db, low, high)
 			} else {
 				log.debug("ERROR-Could not find item id '" + parms(0) + "' at ql '" + parms(2) + "'")
 			}
@@ -170,17 +170,15 @@ class IdMatcher(entries: List[Entry]) {
 		// delete name separation entries so they are not processed again
 		list foreach { parms =>
 			db.update(
-				"DELETE FROM entries WHERE aoid = ? AND ql = ?",
+				"DELETE FROM entries WHERE aoid = ?",
 				Seq(
-					parms(0),
-					parms(2)
+					parms(0)
 				)
 			)
 			db.update(
-				"DELETE FROM entries WHERE aoid = ? AND ql = ?",
+				"DELETE FROM entries WHERE aoid = ?",
 				Seq(
-					parms(1),
-					parms(3)
+					parms(1)
 				)
 			)
 		}
