@@ -77,3 +77,6 @@ UPPER(name) LIKE UPPER('Playfield Item:%')
 UPPER(name) LIKE UPPER('Resolves Mission%')
 UPPER(name) LIKE UPPER('%wear%item')
 UPPER(name) LIKE UPPER('%use%item')
+aoid = 233827
+aoid = 215054
+aoid = 230444
