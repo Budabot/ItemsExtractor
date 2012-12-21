@@ -189,14 +189,14 @@ class IdMatcher {
 	def processRemaingingEntries(db: DB) {
 		//db.startTransaction()
 		val mapper = new FunctionalRowMapper({ rs =>
-			Map("name" -> rs.getString("name"), "itemtype" -> rs.getString("itemtype"), "icon" -> rs.getInt("icon"))
+			Map("name" -> rs.getString("name"), "itemtype" -> rs.getString("itemtype"))
 		})
-		val distinctNames = db.query("SELECT DISTINCT name, itemtype, icon FROM entries ORDER BY name", mapper)
+		val distinctNames = db.query("SELECT DISTINCT name, itemtype FROM entries ORDER BY name", mapper)
 
 		distinctNames foreach { ht =>
 			val entries = db.query(
-				"SELECT * FROM entries WHERE name = ? AND itemtype = ? AND icon = ? ORDER BY ql ASC",
-				ht("name") :: ht("itemtype") :: ht("icon") :: Nil,
+				"SELECT * FROM entries WHERE name = ? AND itemtype = ? ORDER BY ql ASC",
+				ht("name") :: ht("itemtype") ::Nil,
 				new GenericRowMapper[Entry]
 			)
 
@@ -215,8 +215,8 @@ class IdMatcher {
 			} else {
 				log.debug("AOID handling for: '" + ht("name") + "'")
 				val entries2 = db.query(
-					"SELECT * FROM entries WHERE name = ? AND itemtype = ? AND icon = ? ORDER BY aoid ASC",
-					ht("name") :: ht("itemtype") :: ht("icon") :: Nil,
+					"SELECT * FROM entries WHERE name = ? AND itemtype = ? ORDER BY aoid ASC",
+					ht("name") :: ht("itemtype") :: Nil,
 					new GenericRowMapper[Entry]
 				)
 
