@@ -17,7 +17,7 @@ import com.jkbff.ao.tyrbot.jdbc.StringRowMapper
 
 import javax.sql.DataSource
 
-class IdMatcher(entries: List[Entry]) {
+class IdMatcher {
 
 	val log = Logger.getLogger(this.getClass())
 
@@ -40,7 +40,7 @@ class IdMatcher(entries: List[Entry]) {
 		ds
 	}
 	
-	def writeSqlFile(file: String) {
+	def writeSqlFile(entries: List[Entry], file: String) {
 		val outputdb = new DB(h2Ds)
 	
 		val elapsed = Helper.stopwatch{

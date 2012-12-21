@@ -6,7 +6,7 @@ import org.apache.poi.util.LittleEndian
 
 import RDBFunctions._
 
-object RDBIndexReader extends App {
+class RDBIndexReader(in: RandomAccessFile) {
 	val AODB_ITEM_TYPE = 0x000f4254
 	
 	class Index(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: List[Record]) {
@@ -19,7 +19,7 @@ object RDBIndexReader extends App {
 		}
 	}
 	
-	def getResourceTypeMap(in: RandomAccessFile): Map[Long, List[Record]] = {
+	lazy val resourceTypeMap: Map[Long, List[Record]] = {
 		//println("last offset: " + readLittleEndianInt(in))
 		//println("data end: " + readLittleEndianInt(in))
 		//println("block size: " + readLittleEndianInt(in))
