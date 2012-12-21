@@ -159,7 +159,7 @@ class IdMatcher {
 			)
 
 			if (result.isDefined) {
-				val low = new Entry(parms(0).toInt, parms(2).toInt, result.get.name, result.get.iconId, result.get.itemType)
+				val low = new Entry(parms(0).toInt, parms(2).toInt, if (parms.length >= 6) parms(5) else result.get.name, if (parms.length >= 5) parms(4).toInt else result.get.iconId, result.get.itemType)
 				val high = new Entry(parms(1).toInt, parms(3).toInt, "", 0, "")
 				addItem(db, low, high)
 			} else {
