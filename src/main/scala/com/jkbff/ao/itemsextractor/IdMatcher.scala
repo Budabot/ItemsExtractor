@@ -149,7 +149,7 @@ class IdMatcher {
 
 		//db.startTransaction()
 		list foreach { parms =>
-			log.debug("Processing static entry: '" + parms(0) + "', '" + parms(1) + "', '" + parms(2) + "', '" + parms(3) + "'")
+			log.debug("Processing static entry: " + parms.mkString(","))
 			val result = db.queryForObject(
 				"SELECT * FROM entries WHERE aoid = ?",
 				Seq(
@@ -161,6 +161,7 @@ class IdMatcher {
 			if (result.isDefined) {
 				val low = new Entry(parms(0).toInt, parms(2).toInt, if (parms.length >= 6) parms(5) else result.get.name, if (parms.length >= 5) parms(4).toInt else result.get.iconId, result.get.itemType)
 				val high = new Entry(parms(1).toInt, parms(3).toInt, "", 0, "")
+				log.debug("Static entry match: " + low)
 				addItem(db, low, high)
 			} else {
 				log.debug("ERROR-Could not find item id '" + parms(0) + "' at ql '" + parms(2) + "'")
