@@ -36,21 +36,19 @@ object Program extends App {
 	val itemExtractor = new ItemExtractor
 	val indexReader = new RDBIndexReader(in)
 	val idMatcher = new IdMatcher
-	
+
 	idMatcher.writeSqlFile(getEntries, "aodb" + getVersion(aoPath) + ".sql")
-	//println(getSingleItem(282068))
 	
 	def getEntries(): List[Entry] = {
 		val nullAttribute = new RDBAttribute(0, 0)
 		
-		(indexReader.resourceTypeMap(AODB_ITEM_TYPE)).foldLeft(List[RDBItem]()) { (list, x) =>
-			itemExtractor.readItem(db, x) :: list
-		}.map{ x =>
-			val iconAttribute = x.attributes.find(_.id == 79)
-			val qlAttribute = x.attributes.find(_.id == 54)
-			val itemTypeAttribute = x.attributes.find(_.id == 76)
+		indexReader.resourceTypeMap(AODB_ITEM_TYPE) map { x =>
+			val item = itemExtractor.readItem(db, x)
+			val iconAttribute = item.attributes.find(_.id == 79)
+			val qlAttribute = item.attributes.find(_.id == 54)
+			val itemTypeAttribute = item.attributes.find(_.id == 76)
 			
-			new Entry(x.id.toInt, qlAttribute.getOrElse(nullAttribute).value.toInt, x.name, iconAttribute.getOrElse(nullAttribute).value.toInt, RDBFunctions.getItemType(itemTypeAttribute.getOrElse(nullAttribute).value))
+			new Entry(item.id.toInt, qlAttribute.getOrElse(nullAttribute).value.toInt, item.name, iconAttribute.getOrElse(nullAttribute).value.toInt, RDBFunctions.getItemType(itemTypeAttribute.getOrElse(nullAttribute).value))
 		}
 	}
 	

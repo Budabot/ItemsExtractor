@@ -21,7 +21,7 @@ class IdMatcher {
 
 	val log = Logger.getLogger(this.getClass())
 
-	val sqliteDs = {
+	lazy val sqliteDs = {
 		val ds = new BasicDataSource()
 		ds.setDriverClassName("org.sqlite.JDBC")
 		ds.setUrl("jdbc:sqlite::memory:")
@@ -30,7 +30,7 @@ class IdMatcher {
 		ds
 	}
 	
-	val h2Ds = {
+	lazy val h2Ds = {
 		val ds = new BasicDataSource()
 		ds.setDriverClassName("org.h2.Driver")
 		//ds.setUrl("jdbc:h2:mem:db1;IGNORECASE=true")
@@ -48,15 +48,12 @@ class IdMatcher {
 			outputdb.update("DROP TABLE IF EXISTS aodb")
 			outputdb.update("CREATE TABLE entries (aoid INT, ql INT, name TEXT, icon INT, itemtype TEXT, hash TEXT)")
 			outputdb.update("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT)")
-			
-			//val sourceDb = new ScalaJdbcTemplate(getDatasource("jdbc:sqlite:aoitems.db"))
-			//val entries = sourceDb.query("SELECT * FROM tblAO", new GenericRowMapper[Entry2])
-		
+
 			writeEntriesToDb(outputdb, entries)
-			
+
 			outputdb.update("CREATE INDEX idx_name ON entries (name)")
 			outputdb.update("CREATE INDEX idx_aoid ON entries (aoid)")
-			
+
 			processStaticList(outputdb, readEntriesFromFile("static_list.txt"))
 			processDeleteList(outputdb, readEntriesFromFile("delete_list.txt"))
 			processNameSeparations(outputdb, readEntriesFromFile("nameseperation_list.txt"))

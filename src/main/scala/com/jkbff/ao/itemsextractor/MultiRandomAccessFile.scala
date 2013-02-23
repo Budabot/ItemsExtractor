@@ -34,4 +34,10 @@ class MultiRandomAccessFile(files: Seq[String]) {
 		currentFile.readFully(b)
 		new String(b)
 	}
+	
+	def read(length: Int): Array[Byte] = {
+		val b = new Array[Byte](length)
+		currentFile.readFully(b)
+		b
+	}
 }

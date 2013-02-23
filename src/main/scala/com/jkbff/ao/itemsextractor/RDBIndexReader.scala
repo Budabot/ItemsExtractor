@@ -2,8 +2,6 @@ package com.jkbff.ao.itemsextractor
 
 import java.io.RandomAccessFile
 
-import org.apache.poi.util.LittleEndian
-
 import RDBFunctions._
 
 class RDBIndexReader(in: RandomAccessFile) {
