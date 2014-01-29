@@ -51,8 +51,8 @@ class RDBIndexReader(in: RandomAccessFile) {
 		val count = readLittleEndianShort(in)
 		
 		// skip block header
-		in.skipBytes(8)
-		val records = (1L to count).foldLeft(List[Record]()) { (list, number) =>
+		in.skipBytes(18)
+		val records = (1 to count).foldLeft(List[Record]()) { (list, number) =>
 			readRecord(in) :: list
 		}
 		
@@ -60,7 +60,7 @@ class RDBIndexReader(in: RandomAccessFile) {
 	}
 	
 	def readRecord(in: RandomAccessFile): Record = {
-		val offset = readLittleEndianInt(in)
+		val offset = readLittleEndianLong(in)
 		val resourceType = in.readInt()
 		val resourceId = in.readInt()
 		

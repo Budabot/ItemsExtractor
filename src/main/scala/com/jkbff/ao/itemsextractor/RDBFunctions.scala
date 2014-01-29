@@ -4,22 +4,28 @@ import java.io.RandomAccessFile
 import java.io.DataInput
 
 object RDBFunctions {
+	def readLittleEndianLong(in: DataInput): Long = {
+		val b = new Array[Byte](8)
+		in.readFully(b)
+		LittleEndian.getLong(b)
+	}
+
 	def readLittleEndianInt(in: DataInput): Long = {
 		val b = new Array[Byte](4)
 		in.readFully(b)
 		LittleEndian.getUInt(b)
 	}
-	
+
 	def readLittleEndianShort(in: DataInput): Int = {
 		val b = new Array[Byte](2)
 		in.readFully(b)
 		LittleEndian.getUShort(b)
 	}
-	
+
 	def int3F1(n: Long): Long = {
 		return math.round((n / 1009) - 1)
 	}
-	
+
 	def getItemType(value: Long): String = {
 		value match {
 			case 0 => "Misc"
