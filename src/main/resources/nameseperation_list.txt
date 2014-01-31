@@ -14,4 +14,4 @@ Blue Organic %,Advanced Blue Organic %,Armor
 Turquoise Organic %,Advanced Turquoise Organic %,Armor
 Soft %,Thick% ,Armor
 Overtuned Worn %,Overtuned High-Quality %,Armor
-Da Taunter!,Da Taunter!!,Armor
+Da Taunter!,Da Taunter!!,Weapon
