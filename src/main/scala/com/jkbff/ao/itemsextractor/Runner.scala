@@ -2,10 +2,12 @@ package com.jkbff.ao.itemsextractor
 
 import java.io.File
 import java.io.RandomAccessFile
-
 import scala.io.Source
+import org.apache.log4j.Logger
 
 class Runner (aoPath: String) {
+	val log = Logger.getLogger(this.getClass())
+	
 	lazy val db = new MultiRandomAccessFile(getDatabaseFiles())
 	lazy val indexFile = new RandomAccessFile(aoPath + "cd_image/data/db/ResourceDatabase.idx", "r")
 
@@ -18,7 +20,7 @@ class Runner (aoPath: String) {
 	
 	def getEntries(): List[Entry] = {
 		val nullAttribute = new RDBAttribute(0, 0)
-		
+		log.debug("reading index file entries")
 		new RDBIndexReader(indexFile).resourceTypeMap(AODB_ITEM_TYPE) map { x =>
 			val item = new ItemExtractor().readItem(db, x)
 			val iconAttribute = item.attributes.find(_.id == 79)

@@ -140,7 +140,7 @@ class IdMatcher {
 
 		//db.startTransaction()
 		list foreach { parms =>
-			log.debug("Processing static entry: " + parms.mkString(","))
+			log.debug("Processing static entry: " + parms)
 			val result = db.queryForObject(
 				"SELECT * FROM entries WHERE aoid = ?",
 				Seq(
@@ -192,7 +192,7 @@ class IdMatcher {
 				{ rs => new Entry(rs) }
 			)
 
-			val sequential = (null :: entries).zip(entries).exists{ x => x._1.ql >= x._2.ql }
+			val sequential = !entries.zip(entries.drop(1)).exists{ x => x._1.ql >= x._2.ql }
 
 			if (sequential) {
 				log.debug("Sequential ql handling for: '" + ht("name") + "'")
@@ -217,7 +217,7 @@ class IdMatcher {
 							tempEntries
 						}
 
-					log.debug("Adding to temp entries: '" + entry.name + "' '" + entry.id + "' '" + entry.ql + "'")
+					log.debug("Adding to temp entries: " + entry)
 					(entry.ql, entry :: newEntries)
 				}
 				log.debug("Processing temp entries")
@@ -315,6 +315,8 @@ class IdMatcher {
 	}
 
 	def outputSqlFile(db: DB, file: String) {
+		log.debug("writing results to file: '%s'".format(file))
+		
 		val writer = new PrintWriter(file)
 
 		writer.println("DROP TABLE IF EXISTS aodb;")
