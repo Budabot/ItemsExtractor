@@ -18,5 +18,5 @@ object Program extends App {
 		}
 	}
 	
-	new Runner(commandLineArguments.aoPath.replaceAll("\\\\", "/").addEndingIfNeeded("/")).run()
+	new Runner(commandLineArguments.aoPath.replaceAll("\"", "").replaceAll("\\\\", "/").addEndingIfNeeded("/")).run()
 }
