@@ -1,46 +1,35 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.common
 
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-
-import org.springframework.jdbc.core.RowMapper
-
-import com.jkbff.ao.tyrbot.jdbc.Helper.using
-
+import com.jkbff.common.Helper.using
 import javax.sql.DataSource
 
 class DB(ds: DataSource) {
 	val connection = ds.getConnection()
 
-	def query[T](sql: String, params: Seq[Any], rowMapper: RowMapper[T]): List[T] = {
+	def query[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T): List[T] = {
 		using(connection.prepareStatement(sql)) { stmt =>
 			using(executeQuery(stmt, params)) { rs =>
-				var results = List[T]()
-				var j = 0
-				while (rs.next()) {
-					results = rowMapper.mapRow(rs, j) :: results
-					j += 1
-				}
-				results.reverse
+				new ResultSetIterator(rs).map(rowMapper).toList
 			}
 		}
 	}
 	
 	private def executeQuery(stmt: PreparedStatement, params: Seq[Any]): ResultSet = {
-		var i = 1
-		params foreach { param =>
-			stmt.setObject(i, param)
-			i += 1
+		params.foldLeft(1) { (index, param) =>
+			stmt.setObject(index, param)
+			index + 1
 		}
 		
 		stmt.executeQuery()
 	}
 	
-	def queryForObject[T](sql: String, params: Seq[Any], rowMapper: RowMapper[T]) = {
+	def queryForObject[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T) = {
 		using(connection.prepareStatement(sql)) { stmt =>
 			using(executeQuery(stmt, params)) { rs =>
 				if (rs.next()) {
-					Some(rowMapper.mapRow(rs, 1))
+					Some(rowMapper(rs))
 				} else {
 					None
 				}
@@ -48,16 +37,15 @@ class DB(ds: DataSource) {
 		}
 	}
 	
-	def query[T](sql: String, rowMapper: RowMapper[T]): List[T] = {
+	def query[T](sql: String, rowMapper: ResultSet => T): List[T] = {
 		query(sql, Seq(), rowMapper)
 	}
 	
 	def update(sql: String, params: Seq[Any]): Int = {
 		using(connection.prepareStatement(sql)) { stmt =>
-			var i = 1
-			params foreach { param =>
-				stmt.setObject(i, param)
-				i += 1
+			params.foldLeft(1) { (index, param) =>
+				stmt.setObject(index, param)
+				index + 1
 			}
 			
 			stmt.executeUpdate()

@@ -3,19 +3,12 @@ package com.jkbff.ao.itemsextractor
 import java.io.PrintWriter
 import java.io.RandomAccessFile
 import java.sql.ResultSet
-
 import scala.io.Source
-
 import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
-
-import com.jkbff.ao.tyrbot.jdbc.FunctionalRowMapper
-import com.jkbff.ao.tyrbot.jdbc.GenericRowMapper
-import com.jkbff.ao.tyrbot.jdbc.Helper
-import com.jkbff.ao.tyrbot.jdbc.ScalaJdbcTemplate
-import com.jkbff.ao.tyrbot.jdbc.StringRowMapper
-
 import javax.sql.DataSource
+import com.jkbff.common.Helper
+import com.jkbff.common.DB
 
 class IdMatcher {
 
@@ -29,7 +22,7 @@ class IdMatcher {
 		ds.setPassword("")
 		ds
 	}
-	
+
 	lazy val h2Ds = {
 		val ds = new BasicDataSource()
 		ds.setDriverClassName("org.h2.Driver")
@@ -39,10 +32,10 @@ class IdMatcher {
 		ds.setPassword("")
 		ds
 	}
-	
+
 	def writeSqlFile(entries: List[Entry], file: String) {
 		val outputdb = new DB(h2Ds)
-	
+
 		val elapsed = Helper.stopwatch{
 			outputdb.update("DROP TABLE IF EXISTS entries")
 			outputdb.update("DROP TABLE IF EXISTS aodb")
@@ -87,13 +80,14 @@ class IdMatcher {
 					parms(0),
 					parms(1),
 					parms(2)
-				), new StringRowMapper
+				),
+				{ rs => rs.getString("common_name") }
 			)
 
 			commonNames foreach { commonName =>
 				val entries = db.query(
 					"SELECT * FROM (" +
-					"SELECT *, replace(replace(name, ?, ''), ?, '') AS common_name " +
+						"SELECT *, replace(replace(name, ?, ''), ?, '') AS common_name " +
 						"FROM entries) t WHERE (name LIKE ? OR name LIKE ?) " +
 						"AND common_name = ? AND itemtype = ? " +
 						"ORDER BY ql ASC",
@@ -105,7 +99,7 @@ class IdMatcher {
 						commonName,
 						parms(2)
 					),
-					new GenericRowMapper[Entry]
+					{ rs => new Entry(rs) }
 				)
 
 				if (entries.size > 0) {
@@ -134,8 +128,8 @@ class IdMatcher {
 		//db.startTransaction()
 		deleteList foreach { line =>
 			log.debug("Deleting where " + line)
-			val matches = db.query("SELECT aoid, name FROM entries WHERE " + line, new FunctionalRowMapper({ rs => (rs.getInt("aoid"), rs.getString("name"))}))
-			matches foreach(x => log.debug("Deleting item " + x))
+			val matches = db.query("SELECT aoid, name FROM entries WHERE " + line, { rs => (rs.getInt("aoid"), rs.getString("name")) })
+			matches foreach (x => log.debug("Deleting item " + x))
 			db.update("DELETE FROM entries WHERE " + line)
 		}
 		//db.commitTransaction()
@@ -152,7 +146,7 @@ class IdMatcher {
 				Seq(
 					parms(0)
 				),
-				new GenericRowMapper[Entry]
+				{ rs => new Entry(rs) }
 			)
 
 			if (result.isDefined) {
@@ -186,26 +180,19 @@ class IdMatcher {
 
 	def processRemaingingEntries(db: DB) {
 		//db.startTransaction()
-		val mapper = new FunctionalRowMapper({ rs =>
+		val mapper = { rs: ResultSet =>
 			Map("name" -> rs.getString("name"), "itemtype" -> rs.getString("itemtype"))
-		})
+		}
 		val distinctNames = db.query("SELECT DISTINCT name, itemtype FROM entries ORDER BY name", mapper)
 
 		distinctNames foreach { ht =>
 			val entries = db.query(
 				"SELECT * FROM entries WHERE name = ? AND itemtype = ? ORDER BY ql ASC",
-				ht("name") :: ht("itemtype") ::Nil,
-				new GenericRowMapper[Entry]
+				ht("name") :: ht("itemtype") :: Nil,
+				{ rs => new Entry(rs) }
 			)
 
-			var sequential = true
-			var i = 0
-			while (i < entries.size - 1 && sequential) {
-				if (entries(i).ql >= entries(i + 1).ql) {
-					sequential = false
-				}
-				i += 1
-			}
+			val sequential = (null :: entries).zip(entries).exists{ x => x._1.ql >= x._2.ql }
 
 			if (sequential) {
 				log.debug("Sequential ql handling for: '" + ht("name") + "'")
@@ -215,24 +202,26 @@ class IdMatcher {
 				val entries2 = db.query(
 					"SELECT * FROM entries WHERE name = ? AND itemtype = ? ORDER BY aoid ASC",
 					ht("name") :: ht("itemtype") :: Nil,
-					new GenericRowMapper[Entry]
+					{ rs => new Entry(rs) }
 				)
 
-				var tempEntries = List[Entry]()
-				var currentQl = 0
-				entries2 foreach { entry =>
-					if (currentQl >= entry.ql) {
-						log.debug("Processing temp entries")
-						matchEntries(db, tempEntries.reverse)
-						tempEntries = List[Entry]()
-					}
+				val result = entries2.foldLeft(0, List[Entry]()) { (params, entry) =>
+					val (currentQl, tempEntries) = params
+					val newEntries =
+						if (currentQl >= entry.ql) {
+							log.debug("Processing temp entries")
+							matchEntries(db, tempEntries.reverse)
+							
+							Nil
+						} else {
+							tempEntries
+						}
 
 					log.debug("Adding to temp entries: '" + entry.name + "' '" + entry.id + "' '" + entry.ql + "'")
-					currentQl = entry.ql
-					tempEntries = entry :: tempEntries
+					(entry.ql, entry :: newEntries)
 				}
 				log.debug("Processing temp entries")
-				matchEntries(db, tempEntries.reverse)
+				matchEntries(db, result._2.reverse)
 			}
 		}
 		//db.commitTransaction()
@@ -240,7 +229,7 @@ class IdMatcher {
 
 	def matchEntries(db: DB, entries: List[Entry]) {
 		if (entries.size == 0) {
-			return 
+			return
 		}
 
 		log.debug("Matching for: '" + entries(0).name + "' count: " + entries.size)
@@ -269,11 +258,11 @@ class IdMatcher {
 		if (i < entries.size) {
 			tempEntries = entries(entries.size - 1) :: tempEntries
 		}
-		
+
 		addEntryItems(db, tempEntries.reverse)
 	}
-	
-	def addEntryItems(db: DB,entries: List[Entry]) {
+
+	def addEntryItems(db: DB, entries: List[Entry]) {
 		var j = 0
 		while (j < entries.size - 1) {
 			if (entries(j).ql == entries(j + 1).ql - 1) {
@@ -293,7 +282,7 @@ class IdMatcher {
 		if (low.ql > high.ql) {
 			log.error("Invalid item! low ql is greater than high ql: " + low + " " + high)
 		}
-		
+
 		val sql = "INSERT INTO aodb (lowid, highid, lowql, highql, name, icon) VALUES (?, ?, ?, ?, ?, ?)"
 		val params = Seq(
 			low.id,
@@ -327,16 +316,16 @@ class IdMatcher {
 
 	def outputSqlFile(db: DB, file: String) {
 		val writer = new PrintWriter(file)
-		
+
 		writer.println("DROP TABLE IF EXISTS aodb;")
-        writer.println("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT);")
+		writer.println("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT);")
 
-        val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", new GenericRowMapper[Item])
+		val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) })
 
-        items foreach { item =>
-            writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''"), item.icon))
-        }
-        writer.close()
+		items foreach { item =>
+			writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''"), item.icon))
+		}
+		writer.close()
 	}
 
 	def readEntriesFromFile(file: String): List[String] = {
