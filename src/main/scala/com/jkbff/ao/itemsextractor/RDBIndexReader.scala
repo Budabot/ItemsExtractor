@@ -60,7 +60,7 @@ class RDBIndexReader(in: RandomAccessFile) {
 	}
 	
 	def readRecord(in: RandomAccessFile): Record = {
-		val offset = readLittleEndianLong(in)
+		val offset = readMiddleEndianLong(in)
 		val resourceType = in.readInt()
 		val resourceId = in.readInt()
 		

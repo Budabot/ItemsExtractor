@@ -4,10 +4,8 @@ import java.io.RandomAccessFile
 import java.io.DataInput
 
 object RDBFunctions {
-	def readLittleEndianLong(in: DataInput): Long = {
-		val b = new Array[Byte](8)
-		in.readFully(b)
-		LittleEndian.getLong(b)
+	def readMiddleEndianLong(in: DataInput): Long = {
+		readLittleEndianInt(in) * (2 ^ 32) + readLittleEndianInt(in)
 	}
 
 	def readLittleEndianInt(in: DataInput): Long = {
