@@ -1,1 +1,1 @@
-mvn -e clean && mvn -e package && pause
+mvn -e clean package && pause

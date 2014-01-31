@@ -9,11 +9,11 @@
 		</layout>
 	</appender>
 	
-	<appender name="file" class="uk.org.simonsite.log4j.appender.TimeAndSizeRollingAppender">
-		<param name="File" value="chatbot.log"/>
-		<param name="RollOnStartup" value="true"/>
+	<appender name="file" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="output.log"/>
+		<param name="Append" value="false"/>
 		<param name="MaxFileSize" value="50MB"/>
-		<param name="MaxRollFileCount" value="10"/>
+		<param name="MaxBackupIndex" value="10"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d %5p [%t] (%F:%L) - %m%n"/>
 		</layout>
