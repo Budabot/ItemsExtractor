@@ -25,7 +25,7 @@ class DB(ds: DataSource) {
 		stmt.executeQuery()
 	}
 	
-	def queryForObject[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T) = {
+	def queryForObject[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T): Option[T] = {
 		using(connection.prepareStatement(sql)) { stmt =>
 			using(executeQuery(stmt, params)) { rs =>
 				if (rs.next()) {
@@ -67,5 +67,9 @@ class DB(ds: DataSource) {
 	
 	def rollbackTransaction() {
 		connection.rollback()
+	}
+	
+	def close(): Unit = {
+		connection.close()
 	}
 }
