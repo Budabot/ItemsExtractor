@@ -9,11 +9,12 @@
 		</layout>
 	</appender>
 	
-	<appender name="file" class="org.apache.log4j.RollingFileAppender">
+	<appender name="file" class="com.jkbff.common.EnhancedRollingFileAppender">
 		<param name="File" value="output.log"/>
 		<param name="Append" value="false"/>
 		<param name="MaxFileSize" value="50MB"/>
 		<param name="MaxBackupIndex" value="10"/>
+		<param name="RollOnStartup" value="true" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d %5p [%t] (%F:%L) - %m%n"/>
 		</layout>
