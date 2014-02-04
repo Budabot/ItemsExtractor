@@ -1,13 +1,13 @@
 package com.jkbff.ao.itemsextractor
 
 import java.io.RandomAccessFile
-
 import RDBFunctions._
+import scala.annotation.tailrec
 
 class RDBIndexReader(in: RandomAccessFile) {
 	val AODB_ITEM_TYPE = 0x000f4254
 	
-	class Index(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: List[Record]) {
+	class IndexBlock(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: List[Record]) {
 		
 		override def toString() = {
 			"offset: " + offset +
@@ -31,19 +31,18 @@ class RDBIndexReader(in: RandomAccessFile) {
 		records
 	}
 	
-	def readIndexes(in: RandomAccessFile, dataStart: Long): List[Index] = {
-		var nextBlock = dataStart
-		var indexes: List[Index] = Nil
-		while (nextBlock != 0) {
-			in.seek(nextBlock)
-			val index = readIndexBlock(in)
-			indexes = index :: indexes
-			nextBlock = index.nextBlock
+	@tailrec
+	final def readIndexes(in: RandomAccessFile, dataStart: Long, list: List[IndexBlock] = Nil): List[IndexBlock] = {
+		if (dataStart == 0) {
+			list.reverse
+		} else {
+			in.seek(dataStart)
+			val indexBlock = readIndexBlock(in)
+			readIndexes(in, indexBlock.nextBlock, indexBlock :: list)
 		}
-		indexes.reverse
 	}
 	
-	def readIndexBlock(in: RandomAccessFile): Index = {
+	def readIndexBlock(in: RandomAccessFile): IndexBlock = {
 		val offset = in.getFilePointer()
 		val nextBlock = readLittleEndianInt(in)
 		val prevBlock = readLittleEndianInt(in)
@@ -56,7 +55,7 @@ class RDBIndexReader(in: RandomAccessFile) {
 			readRecord(in) :: list
 		}
 		
-		new Index(offset, nextBlock, prevBlock, records.reverse)
+		new IndexBlock(offset, nextBlock, prevBlock, records.reverse)
 	}
 	
 	def readRecord(in: RandomAccessFile): Record = {
