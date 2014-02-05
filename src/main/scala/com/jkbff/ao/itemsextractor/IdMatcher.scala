@@ -103,7 +103,7 @@ class IdMatcher {
 				)
 
 				if (entries.size > 0) {
-					matchEntries(db, entries)
+					pairEntries(db, entries)
 				}
 			}
 		}
@@ -196,7 +196,7 @@ class IdMatcher {
 
 			if (sequential) {
 				log.debug("Sequential ql handling for: '" + ht("name") + "'")
-				matchEntries(db, entries)
+				pairEntries(db, entries)
 			} else {
 				log.debug("AOID handling for: '" + ht("name") + "'")
 				val entries2 = db.query(
@@ -210,7 +210,7 @@ class IdMatcher {
 					val newEntries =
 						if (currentQl >= entry.ql) {
 							log.debug("Processing temp entries")
-							matchEntries(db, tempEntries.reverse)
+							pairEntries(db, tempEntries.reverse)
 							
 							Nil
 						} else {
@@ -221,13 +221,13 @@ class IdMatcher {
 					(entry.ql, entry :: newEntries)
 				}
 				log.debug("Processing temp entries")
-				matchEntries(db, result._2.reverse)
+				pairEntries(db, result._2.reverse)
 			}
 		}
 		//db.commitTransaction()
 	}
 
-	def matchEntries(db: DB, entries: List[Entry]) {
+	def pairEntries(db: DB, entries: List[Entry]) {
 		if (entries.size == 0) {
 			return
 		}
@@ -263,18 +263,18 @@ class IdMatcher {
 	}
 
 	def addEntryItems(db: DB, entries: List[Entry]) {
-		var j = 0
-		while (j < entries.size - 1) {
-			if (entries(j).ql == entries(j + 1).ql - 1) {
-				addItem(db, entries(j), entries(j))
-				addItem(db, entries(j + 1), entries(j + 1))
+		entries.grouped(2).foreach { pair =>
+			if (pair.size == 1) {
+				// last one could be single
+				addItem(db, pair(0), pair(0))
+			} else if (pair(0).ql == pair(1).ql - 1) {
+				// if pair entries have sequential qls, add them as individual items
+				addItem(db, pair(0), pair(0))
+				addItem(db, pair(1), pair(1))
 			} else {
-				addItem(db, entries(j), entries(j + 1))
+				// add pair entries as item
+				addItem(db, pair(0), pair(1))
 			}
-			j += 2
-		}
-		if (j < entries.size) {
-			addItem(db, entries(entries.size - 1), entries(entries.size - 1))
 		}
 	}
 
