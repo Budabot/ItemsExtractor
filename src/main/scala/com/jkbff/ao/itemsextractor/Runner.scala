@@ -18,7 +18,7 @@ class Runner (aoPath: String) {
 		new IdMatcher().writeSqlFile(getEntries, "aodb" + getVersion(aoPath) + ".sql")
 	}
 	
-	def getEntries(): List[Entry] = {
+	def getEntries(): Seq[Entry] = {
 		val nullAttribute = new RDBAttribute(0, 0)
 		log.debug("reading index file entries")
 		new RDBIndexReader(indexFile).resourceTypeMap(AODB_ITEM_TYPE) map { x =>
@@ -44,7 +44,7 @@ class Runner (aoPath: String) {
 	}
 	
 	def getDatabaseFiles(): Seq[String] = {
-		new File(aoPath + "cd_image/data/db/").listFiles().collect { 
+		new File(aoPath + "cd_image/data/db/").listFiles().collect {
 			case file: File if file.isFile() && file.getName().startsWith("ResourceDatabase.dat") => file.getCanonicalPath()
 		}
 	}

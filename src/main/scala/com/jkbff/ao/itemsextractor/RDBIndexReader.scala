@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 class RDBIndexReader(in: RandomAccessFile) {
 	val AODB_ITEM_TYPE = 0x000f4254
 	
-	class IndexBlock(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: List[Record]) {
+	class IndexBlock(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: Seq[Record]) {
 		
 		override def toString() = {
 			"offset: " + offset +
@@ -17,7 +17,7 @@ class RDBIndexReader(in: RandomAccessFile) {
 		}
 	}
 	
-	lazy val resourceTypeMap: Map[Long, List[Record]] = {
+	lazy val resourceTypeMap = {
 		//println("last offset: " + readLittleEndianInt(in))
 		//println("data end: " + readLittleEndianInt(in))
 		//println("block size: " + readLittleEndianInt(in))

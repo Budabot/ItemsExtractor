@@ -1,6 +1,6 @@
 package com.jkbff.ao.itemsextractor
 
-class RDBItem(val id: Long, val name: String, val description: String, val attributes: List[RDBAttribute]) {
+class RDBItem(val id: Long, val name: String, val description: String, val attributes: Seq[RDBAttribute]) {
 	override def toString() =
 		"Name: " + name +
 		"\nDescription: " + description +

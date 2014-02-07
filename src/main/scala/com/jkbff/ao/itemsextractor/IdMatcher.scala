@@ -33,7 +33,7 @@ class IdMatcher {
 		ds
 	}
 
-	def writeSqlFile(entries: List[Entry], file: String) {
+	def writeSqlFile(entries: Seq[Entry], file: String) {
 		val outputdb = new DB(h2Ds)
 
 		val elapsed = Helper.stopwatch{
@@ -65,7 +65,7 @@ class IdMatcher {
 		ds
 	}
 
-	def processNameSeparations(db: DB, nameSeparationList: List[String]) {
+	def processNameSeparations(db: DB, nameSeparationList: Seq[String]) {
 		//db.startTransaction()
 		nameSeparationList foreach { line =>
 			val parms = line.split(',')
@@ -135,12 +135,12 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def processStaticList(db: DB, staticList: List[String]) {
+	def processStaticList(db: DB, staticList: Seq[String]) {
 		val list = staticList map (_.split(','))
 
 		//db.startTransaction()
 		list foreach { parms =>
-			log.debug("Processing static entry: " + parms)
+			log.debug("Processing static entry: " + parms.mkString(","))
 			val result = db.queryForObject(
 				"SELECT * FROM entries WHERE aoid = ?",
 				Seq(
@@ -227,7 +227,7 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def pairEntries(db: DB, entries: List[Entry]) {
+	def pairEntries(db: DB, entries: Seq[Entry]) {
 		if (entries.size == 0) {
 			return
 		}
@@ -262,7 +262,7 @@ class IdMatcher {
 		addEntryItems(db, tempEntries.reverse)
 	}
 
-	def addEntryItems(db: DB, entries: List[Entry]) {
+	def addEntryItems(db: DB, entries: Seq[Entry]) {
 		entries.grouped(2).foreach { pair =>
 			if (pair.size == 1) {
 				// last one could be single
@@ -296,7 +296,7 @@ class IdMatcher {
 		//log.debug(sql)
 	}
 
-	def writeEntriesToDb(db: DB, entries: List[Entry]) {
+	def writeEntriesToDb(db: DB, entries: Seq[Entry]) {
 		//db.startTransaction()
 		log.debug("writing %d entries".format(entries.size))
 		entries foreach { entry =>
