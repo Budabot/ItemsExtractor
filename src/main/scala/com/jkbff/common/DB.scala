@@ -72,4 +72,11 @@ class DB(ds: DataSource) {
 	def close(): Unit = {
 		connection.close()
 	}
+	
+	def getColumnNames(rs: ResultSet): List[String] = {
+		val meta = rs.getMetaData()
+		(1 to meta.getColumnCount()).foldLeft(List[String]()) { (params, i) =>
+			meta.getColumnName(i) :: params
+		}.reverse
+	}
 }
