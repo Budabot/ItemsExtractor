@@ -4,7 +4,7 @@ object EnrichedString {
     implicit def stringToEnrichedString(f: String) = new EnrichedString(f)
     
     class EnrichedString (f: String) {
-        def ucfirst() = f.toLowerCase().capitalize
+        def ucfirst(): String = f.toLowerCase().capitalize
         
         def explode(separator: String = " ", limit: Int = -1, input: String = f): List[String] = {
         	input.indexOf(separator) match {

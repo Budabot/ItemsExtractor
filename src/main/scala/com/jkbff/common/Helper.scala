@@ -35,8 +35,8 @@ object Helper {
 	}
 
 	def sqlSearchBuilder(column: String, searchTerms: Array[String]): (String, Seq[String]) = {
-		searchTerms.foldLeft(("", Seq[String]())) { (result, searchTerm) =>
-			(result._1 + " AND " + column + " LIKE ?", result._2 :+ ("%" + searchTerm + "%"))
+		searchTerms.foldLeft(("", Seq[String]())) { case ((acc, params), searchTerm) =>
+			(acc + " AND " + column + " LIKE ?", params :+ ("%" + searchTerm + "%"))
 		}
 	}
 
@@ -49,14 +49,20 @@ object Helper {
 	
 	def stopwatch(label: String)(op: => Any): Unit = {
 		val elapsed = stopwatch(op)
-		println(label, elapsed)
+		println(s"${label}: ${elapsed}ms")
 	}
 
 	/**
-	 * get all methods on obj that have the HandleCommand annotation
+	 * get all methods on obj that have the specified annotation
 	 */
 	def getMethods[T <: java.lang.annotation.Annotation](obj: Any, clazz: Class[T]): Array[(T, Method)] = {
-		obj.getClass().getMethods().map{ method => (method.getAnnotation(clazz), method) }.filter(x => x._1 != null)
+		obj.getClass().getMethods().
+			map{ method =>
+				(method.getAnnotation(clazz), method)
+			}.
+			filter{ case (annotation, _) => 
+				annotation != null
+			}
 	}
 
 	def hasAnnotation[T <: java.lang.annotation.Annotation](method: Method, clazz: Class[T]): Boolean = {
