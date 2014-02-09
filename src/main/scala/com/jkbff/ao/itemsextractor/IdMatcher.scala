@@ -141,7 +141,7 @@ class IdMatcher {
 		//db.startTransaction()
 		list foreach { parms =>
 			log.debug("Processing static entry: " + parms.mkString(","))
-			val result = db.queryForObject(
+			val result = db.querySingle(
 				"SELECT * FROM entries WHERE aoid = ?",
 				Seq(
 					parms(0)
