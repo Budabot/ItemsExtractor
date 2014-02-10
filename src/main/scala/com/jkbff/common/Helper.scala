@@ -18,22 +18,6 @@ object Helper {
 		}
 	}
 
-	def transaction(connection: Connection)(op: Connection => Unit) {
-		using(connection) { connection =>
-			try {
-				connection.setAutoCommit(false)
-				op(connection)
-				connection.commit()
-			} catch {
-				case e: Exception =>
-					connection.rollback()
-					throw e
-			} finally {
-				connection.setAutoCommit(true)
-			}
-		}
-	}
-
 	def sqlSearchBuilder(column: String, searchTerms: Array[String]): (String, Seq[String]) = {
 		searchTerms.foldLeft(("", Seq[String]())) { case ((acc, params), searchTerm) =>
 			(acc + " AND " + column + " LIKE ?", params :+ ("%" + searchTerm + "%"))
