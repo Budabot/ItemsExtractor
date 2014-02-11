@@ -9,6 +9,12 @@ class ObjectPrinter {
 	val prefixInc = "  "
 		
 	val visited = mutable.Map[Any, Boolean]()
+	val ignore = mutable.Map[Class[_], Boolean]()
+	
+	def addIgnore(clazz: Class[_]): ObjectPrinter = {
+		ignore.put(clazz, true)
+		this
+	}
 	
 	def printObj(obj: Any, showTypes: Boolean): String = {
 		visited.clear
@@ -22,6 +28,10 @@ class ObjectPrinter {
 			obj.getClass.getName().
 				replaceAll("java\\.lang\\.(String|Integer|Long|Double|Float|Char|Byte|Short)", "$1")
 		}
+	}
+	
+	def isInIgnoreList(clazz: Class[_]): Boolean = {
+		ignore.contains(clazz)
 	}
 	
 	def getValue(obj: Any, prefix: String, showTypes: Boolean): String = {
@@ -38,6 +48,8 @@ class ObjectPrinter {
 				obj.isInstanceOf[Boolean] ||
 				obj.isInstanceOf[Class[_]]) {
 			obj + "\n"
+		} else if (isInIgnoreList(obj.getClass)) {
+			"**IGNORED**\n"
 		} else if (visited.contains(obj)) {
 			"**RECURSION**\n"
 		} else {
