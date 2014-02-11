@@ -9,11 +9,19 @@ class ObjectPrinter {
 	val prefixInc = "  "
 		
 	val visited = mutable.Map[Any, Boolean]()
-	val ignore = mutable.Map[Class[_], Boolean]()
+	val custom = mutable.Map[Class[_], Printer]()
 	
-	def addIgnore(clazz: Class[_]): ObjectPrinter = {
-		ignore.put(clazz, true)
+	def addCustom[T](clazz: Class[T], printer: Printer): ObjectPrinter = {
+		custom.put(clazz, printer)
 		this
+	}
+	
+	def addIgnore[T](clazz: Class[T]): ObjectPrinter = {
+		addCustom(clazz, new Printer {
+			def printObj(obj: Any): String = {
+				"**IGNORED**"
+			}
+		})
 	}
 	
 	def printObj(obj: Any, showTypes: Boolean): String = {
@@ -30,10 +38,6 @@ class ObjectPrinter {
 		}
 	}
 	
-	def isInIgnoreList(clazz: Class[_]): Boolean = {
-		ignore.contains(clazz)
-	}
-	
 	def getValue(obj: Any, prefix: String, showTypes: Boolean): String = {
 		if (obj == null) {
 			"null\n"
@@ -48,8 +52,8 @@ class ObjectPrinter {
 				obj.isInstanceOf[Boolean] ||
 				obj.isInstanceOf[Class[_]]) {
 			obj + "\n"
-		} else if (isInIgnoreList(obj.getClass)) {
-			"**IGNORED**\n"
+		} else if (custom.contains(obj.getClass)) {
+			custom(obj.getClass).printObj(obj) + "\n"
 		} else if (visited.contains(obj)) {
 			"**RECURSION**\n"
 		} else {
@@ -94,4 +98,8 @@ class ObjectPrinter {
 	}
 	
 	def getClassHierarchy(clazz: Class[_]): Stream[Class[_]] = clazz #:: getClassHierarchy(clazz.getSuperclass())
+}
+
+trait Printer {
+	def printObj(obj: Any): String
 }
