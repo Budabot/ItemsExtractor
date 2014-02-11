@@ -11,6 +11,24 @@ class ObjectPrinter {
 	val visited = mutable.Map[Any, Boolean]()
 	val custom = mutable.Map[Class[_], Printer]()
 	
+	def addStandardPrinters(): ObjectPrinter = {
+		addCustom(classOf[java.lang.Class[_]], new Printer {
+			def printObj(obj: Any): String = {
+				obj.toString
+			}
+		})
+		addCustom(classOf[java.math.BigDecimal], new Printer {
+			def printObj(obj: Any): String = {
+				obj.asInstanceOf[java.math.BigDecimal].toPlainString
+			}
+		})
+		addCustom(classOf[java.math.BigInteger], new Printer {
+			def printObj(obj: Any): String = {
+				obj.asInstanceOf[java.math.BigInteger].toString
+			}
+		})
+	}
+	
 	def addCustom[T](clazz: Class[T], printer: Printer): ObjectPrinter = {
 		custom.put(clazz, printer)
 		this
@@ -49,8 +67,7 @@ class ObjectPrinter {
 				obj.isInstanceOf[Short] ||
 				obj.isInstanceOf[Byte] ||
 				obj.isInstanceOf[Char] ||
-				obj.isInstanceOf[Boolean] ||
-				obj.isInstanceOf[Class[_]]) {
+				obj.isInstanceOf[Boolean]) {
 			obj + "\n"
 		} else if (custom.contains(obj.getClass)) {
 			custom(obj.getClass).printObj(obj) + "\n"
