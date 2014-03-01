@@ -10,7 +10,7 @@ import org.apache.commons.dbcp.BasicDataSource
 import javax.sql.DataSource
 
 object Helper {
-	def using[T <: { def close(): Unit }, U](resource: T)(op: T => U): U = {
+	def using[T <: { def close(): Any }, U](resource: T)(op: T => U): U = {
 		try {
 			op(resource)
 		} finally {
