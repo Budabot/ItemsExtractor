@@ -4,6 +4,7 @@ import com.jkbff.common.Helper._
 import java.lang.reflect.Field
 import scala.annotation.tailrec
 import collection.mutable
+import collection.JavaConversions._
 
 class ObjectPrinter {
 	val prefixInc = "  "
@@ -13,17 +14,17 @@ class ObjectPrinter {
 	
 	def addStandardPrinters(): ObjectPrinter = {
 		addCustom(classOf[java.lang.Class[_]], new Printer {
-			def printObj(obj: Any): String = {
+			def printObj[T](obj: T): String = {
 				obj.toString
 			}
 		})
 		addCustom(classOf[java.math.BigDecimal], new Printer {
-			def printObj(obj: Any): String = {
+			def printObj[T](obj: T): String = {
 				obj.asInstanceOf[java.math.BigDecimal].toPlainString
 			}
 		})
 		addCustom(classOf[java.math.BigInteger], new Printer {
-			def printObj(obj: Any): String = {
+			def printObj[T](obj: T): String = {
 				obj.asInstanceOf[java.math.BigInteger].toString
 			}
 		})
@@ -36,7 +37,7 @@ class ObjectPrinter {
 	
 	def addIgnore[T](clazz: Class[T]): ObjectPrinter = {
 		addCustom(clazz, new Printer {
-			def printObj(obj: Any): String = {
+			def printObj[T](obj: T): String = {
 				"**IGNORED**"
 			}
 		})
@@ -76,14 +77,20 @@ class ObjectPrinter {
 		} else {
 			visited.put(obj, true)
 			
-			 if (obj.isInstanceOf[Map[_,_]]) {
-				visited.put(obj, true)
+			if (obj.isInstanceOf[Map[_,_]]) {
 				"\n" + obj.asInstanceOf[Map[_,_]].foldLeft("") { case (str, (key, value)) =>
 					str + printObj(s"[${key}]", value, prefix + prefixInc, showTypes)
 				}
+			} else if (obj.isInstanceOf[java.util.Map[_,_]]) {
+				"\n" + obj.asInstanceOf[java.util.Map[_,_]].foldLeft("") { case (str, (key, value)) =>
+					str + printObj(s"[${key}]", value, prefix + prefixInc, showTypes)
+				}
 			} else if (obj.isInstanceOf[Iterable[_]]) {
-				visited.put(obj, true)
 				"\n" + obj.asInstanceOf[Iterable[_]].foldLeft("", 0) { case ((str, i), item) =>
+					(str + printObj(s"[${i}]", item, prefix + prefixInc, showTypes), i + 1)
+				}._1
+			} else if (obj.isInstanceOf[java.util.Collection[_]]) {
+				"\n" + obj.asInstanceOf[java.util.Collection[_]].foldLeft("", 0) { case ((str, i), item) =>
 					(str + printObj(s"[${i}]", item, prefix + prefixInc, showTypes), i + 1)
 				}._1
 			} else {
@@ -118,5 +125,5 @@ class ObjectPrinter {
 }
 
 trait Printer {
-	def printObj(obj: Any): String
+	def printObj[T](obj: T): String
 }
