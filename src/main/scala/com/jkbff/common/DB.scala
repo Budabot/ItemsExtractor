@@ -4,7 +4,6 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import com.jkbff.common.Helper.using
 import javax.sql.DataSource
-import java.sql.Connection
 
 class DB(ds: DataSource) {
 	val connection = ds.getConnection()
@@ -53,11 +52,12 @@ class DB(ds: DataSource) {
 		update(sql, Seq())
 	}
 	
-	def transaction()(op: => Any) {
+	def transaction[T]()(op: => T): T = {
 		try {
 			connection.setAutoCommit(false)
-			op
+			val result = op
 			connection.commit()
+			result
 		} catch {
 			case e: Exception =>
 				connection.rollback()
