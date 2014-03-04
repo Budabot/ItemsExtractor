@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 import collection.mutable
 import collection.JavaConversions._
 
-class ObjectPrinter {
+class ObjectPrinter extends Printer {
 	val prefixInc = "  "
 		
 	val visited = mutable.Map[Any, Boolean]()
@@ -14,17 +14,17 @@ class ObjectPrinter {
 	
 	def addStandardPrinters(): ObjectPrinter = {
 		addCustom(classOf[java.lang.Class[_]], new Printer {
-			def printObj[T](obj: T): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
 				obj.toString
 			}
 		})
 		addCustom(classOf[java.math.BigDecimal], new Printer {
-			def printObj[T](obj: T): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
 				obj.asInstanceOf[java.math.BigDecimal].toPlainString
 			}
 		})
 		addCustom(classOf[java.math.BigInteger], new Printer {
-			def printObj[T](obj: T): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
 				obj.asInstanceOf[java.math.BigInteger].toString
 			}
 		})
@@ -37,7 +37,7 @@ class ObjectPrinter {
 	
 	def addIgnore[T](clazz: Class[T]): ObjectPrinter = {
 		addCustom(clazz, new Printer {
-			def printObj[T](obj: T): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
 				"**IGNORED**"
 			}
 		})
@@ -70,8 +70,8 @@ class ObjectPrinter {
 				obj.isInstanceOf[Char] ||
 				obj.isInstanceOf[Boolean]) {
 			obj + "\n"
-		} else if (custom.contains(obj.getClass)) {
-			custom(obj.getClass).printObj(obj) + "\n"
+		} else if (checkForCustomPrinter(obj.getClass).isDefined) {
+			checkForCustomPrinter(obj.getClass).get._2.printObj("", obj, prefix, showTypes) + "\n"
 		} else if (visited.contains(obj)) {
 			"**RECURSION**\n"
 		} else {
@@ -112,12 +112,18 @@ class ObjectPrinter {
 			arr ++: clazz.getDeclaredFields()
 		}
 	}
-	
-	def printObj(name: String, obj: Any, prefix: String, showTypes: Boolean): String = {
+
+	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
 		if (showTypes) {
 			prefix + s"${name}: ${getObjType(obj)} = ${getValue(obj, prefix, showTypes)}"
 		} else {
 			prefix + s"${name} = ${getValue(obj, prefix, showTypes)}"
+		}
+	}
+
+	def checkForCustomPrinter(objClass: Class[_]): Option[(Class[_], Printer)] = {
+		custom find { case (clazz, printer) =>
+			clazz.isAssignableFrom(objClass)
 		}
 	}
 	
@@ -125,5 +131,5 @@ class ObjectPrinter {
 }
 
 trait Printer {
-	def printObj[T](obj: T): String
+	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String
 }

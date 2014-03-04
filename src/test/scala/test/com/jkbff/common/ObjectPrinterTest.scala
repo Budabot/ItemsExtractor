@@ -4,12 +4,13 @@ import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import com.jkbff.common.ObjectPrinter
+import com.jkbff.common.Printer
 
 @RunWith(classOf[JUnitRunner])
 class ObjectPrinterTest extends FunSuite {
-	val objectPrinter = new ObjectPrinter
-	
 	test("getFields()") {
+		val objectPrinter = new ObjectPrinter
+
 		val obj = new TestClass2("hi", "bye1")
 		
 		val expected = List("nest1", "nest2", "intVal", "longInt", "dub", "floatingPoint", "shortVal", "byteVal", "charVal", "someList", "someSet", "someMap", "hello", "goodBye")
@@ -18,6 +19,8 @@ class ObjectPrinterTest extends FunSuite {
 	}
 	
 	test("getClassHierarchy()") {
+		val objectPrinter = new ObjectPrinter
+
 		val testclass = new TestClass2("hi", "bye1")
 		
 		val expected = List(classOf[TestClass2], classOf[TestClass])
@@ -25,14 +28,43 @@ class ObjectPrinterTest extends FunSuite {
 		
 		assert(result == expected)
 	}
+
+	test("checkForCustomPrinter()") {
+		val testPrinter = new ObjectPrinter
+
+		class Test1 {
+
+		}
+
+		class Test2 extends Test1 {
+
+		}
+
+		class Test3 extends Test2
+
+		testPrinter.addCustom(classOf[Test1], new Printer {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+				"\n" + prefix + testPrinter.prefixInc + "test1: " + obj.getClass
+			}
+		})
+
+		val expected = "obj = \n  test1: class test.com.jkbff.common.ObjectPrinterTest$$anonfun$3$Test3$1\n"
+		val result = testPrinter.printObj(new Test3, false)
+
+		assert(result == expected)
+	}
 	
 	test("printObj() for a string") {
+		val objectPrinter = new ObjectPrinter
+
 		val expected = "obj: String = hi\n"
 		
 		assert(objectPrinter.printObj("hi", true) == expected)
 	}
 	
 	test("printObj() for an object with no fields") {
+		val objectPrinter = new ObjectPrinter
+
 		val testclass = new AnyRef
 		
 		val expected = "obj = \n  <no fields>\n"
@@ -41,6 +73,8 @@ class ObjectPrinterTest extends FunSuite {
 	}
 	
 	test("printObj() for a java Collection") {
+		val objectPrinter = new ObjectPrinter
+
 		val list = new java.util.ArrayList[String]
 		list.add("hello")
 		list.add("hey")
@@ -52,6 +86,8 @@ class ObjectPrinterTest extends FunSuite {
 	}
 	
 	test("printObj() for a java map") {
+		val objectPrinter = new ObjectPrinter
+
 		val map = new java.util.HashMap[String, String]()
 		map.put("first", "a1")
 		map.put("second", "a2")
@@ -63,6 +99,8 @@ class ObjectPrinterTest extends FunSuite {
 	}
 	
 	test("printObj() for a complex object") {
+		val objectPrinter = new ObjectPrinter
+
 		val expected = "obj: test.com.jkbff.common.TestClass2 = \n  nest1: test.com.jkbff.common.TestClass = \n    hello: String = hola\n    goodBye: String = adios\n  nest2: test.com.jkbff.common.TestClass = \n    hello: String = bonjour!\n    goodBye: String = adieu\n  intVal: Integer = 987\n  longInt: Long = 1234\n  dub: Double = 12.34\n  floatingPoint: Float = 123.456\n  shortVal: Short = 123\n  byteVal: Byte = 111\n  charVal: Character = J\n  someList: scala.collection.immutable.$colon$colon = \n    [0]: Integer = 1\n    [1]: Integer = 2\n    [2]: Integer = 3\n  someSet: scala.collection.immutable.Set$Set3 = \n    [0]: String = a\n    [1]: String = b\n    [2]: String = c\n  someMap: scala.collection.immutable.HashMap$HashTrieMap = \n    [cc]: String = jamie\n    [aa]: String = jason\n    [bb]: String = jodie\n    [ee]: String = casey\n    [ff]: String = cody\n    [dd]: String = kelsie\n  hello: String = hi\n  goodBye: String = bye1\n"
 		
 		assert(objectPrinter.printObj(new TestClass2("hi", "bye1"), true) == expected)
