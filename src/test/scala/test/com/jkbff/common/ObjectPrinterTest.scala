@@ -43,7 +43,7 @@ class ObjectPrinterTest extends FunSuite {
 		class Test3 extends Test2
 
 		testPrinter.addCustom(classOf[Test1], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 				"\n" + prefix + testPrinter.prefixInc + "test1: " + obj.getClass
 			}
 		})
@@ -105,6 +105,49 @@ class ObjectPrinterTest extends FunSuite {
 		
 		assert(objectPrinter.printObj(new TestClass2("hi", "bye1"), true) == expected)
 	}
+
+	test("printObj() with null values") {
+		val objectPrinter = new ObjectPrinter
+
+		val obj = new Test4
+
+		val expected = "obj = \n  someRef = null\n"
+		val result = objectPrinter.printObj(obj, false)
+
+		assert(result == expected)
+	}
+
+	test("printObj() with simple recursive values") {
+		val objectPrinter = new ObjectPrinter
+
+		val obj = new LeftRight
+		obj.left = obj
+		obj.right = obj
+
+		val expected = "obj = \n  left = **RECURSION**\n  right = **RECURSION**\n"
+		val result = objectPrinter.printObj(obj, false)
+
+		assert(result == expected)
+	}
+
+	test("printObj() with complex recursive values") {
+		val objectPrinter = new ObjectPrinter
+
+		val root = new LeftRight
+		root.left = new LeftRight
+		root.right = new LeftRight
+		root.left.left = new LeftRight
+		root.left.right = new LeftRight
+		root.right.left = root.left.left
+		root.right.right = new LeftRight
+		root.right.right.left = root.right.left.right
+		root.right.right.right = root.right
+
+		val expected = "obj = \n  left = \n    left = \n      left = null\n      right = null\n    right = \n      left = null\n      right = null\n  right = \n    left = \n      left = null\n      right = null\n    right = \n      left = null\n      right = **RECURSION**\n"
+		val result = objectPrinter.printObj(root, false)
+
+		assert(result == expected)
+	}
 }
 
 class TestClass(val hello: String, val goodBye: String) {
@@ -124,4 +167,13 @@ class TestClass2(hello: String, goodBye: String) extends TestClass(hello, goodBy
 	val someList = Seq(1, 2, 3)
 	val someSet = Set("a", "b", "c")
 	val someMap = Map("aa" -> "jason", "bb" -> "jodie", "cc" -> "jamie", "dd" -> "kelsie", "ee" -> "casey", "ff" -> "cody")
+}
+
+class Test4 {
+	val someRef: Any = null
+}
+
+class LeftRight {
+	var left: LeftRight = null
+	var right: LeftRight = null
 }
