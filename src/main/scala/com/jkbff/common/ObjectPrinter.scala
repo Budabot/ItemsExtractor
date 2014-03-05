@@ -8,40 +8,30 @@ import collection.JavaConversions._
 
 class ObjectPrinter extends Printer {
 	val prefixInc = "  "
-		
+
 	val custom = mutable.Map[Class[_], Printer]()
+
+	val toStringPrinter =  new Printer {
+		def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
+			obj.toString
+		}
+	}
 	
 	def addStandardPrinters(): ObjectPrinter = {
-		addCustom(classOf[java.lang.Class[_]], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
-				obj.toString
-			}
-		})
+		addCustom(classOf[java.lang.Class[_]], toStringPrinter)
 		addCustom(classOf[java.math.BigDecimal], new Printer {
 			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 				obj.asInstanceOf[java.math.BigDecimal].toPlainString
 			}
 		})
-		addCustom(classOf[java.math.BigInteger], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
-				obj.asInstanceOf[java.math.BigInteger].toString
-			}
-		})
+		addCustom(classOf[java.math.BigInteger], toStringPrinter)
 	}
 	
 	def addCustom[T](clazz: Class[T], printer: Printer): ObjectPrinter = {
 		custom.put(clazz, printer)
 		this
 	}
-	
-	def addIgnore[T](clazz: Class[T]): ObjectPrinter = {
-		addCustom(clazz, new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
-				"**IGNORED**"
-			}
-		})
-	}
-	
+
 	def printObj(obj: Any, showTypes: Boolean): String = {
 		printObj("obj", obj, "", showTypes, Nil)
 	}
