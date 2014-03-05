@@ -9,22 +9,21 @@ import collection.JavaConversions._
 class ObjectPrinter extends Printer {
 	val prefixInc = "  "
 		
-	val visited = mutable.Map[Any, Boolean]()
 	val custom = mutable.Map[Class[_], Printer]()
 	
 	def addStandardPrinters(): ObjectPrinter = {
 		addCustom(classOf[java.lang.Class[_]], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 				obj.toString
 			}
 		})
 		addCustom(classOf[java.math.BigDecimal], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 				obj.asInstanceOf[java.math.BigDecimal].toPlainString
 			}
 		})
 		addCustom(classOf[java.math.BigInteger], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 				obj.asInstanceOf[java.math.BigInteger].toString
 			}
 		})
@@ -37,15 +36,14 @@ class ObjectPrinter extends Printer {
 	
 	def addIgnore[T](clazz: Class[T]): ObjectPrinter = {
 		addCustom(clazz, new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 				"**IGNORED**"
 			}
 		})
 	}
 	
 	def printObj(obj: Any, showTypes: Boolean): String = {
-		visited.clear
-		printObj("obj", obj, "", showTypes)
+		printObj("obj", obj, "", showTypes, Nil)
 	}
 	
 	def getObjType(obj: Any): String = {
@@ -57,7 +55,7 @@ class ObjectPrinter extends Printer {
 		}
 	}
 	
-	def getValue(obj: Any, prefix: String, showTypes: Boolean): String = {
+	def getValue(obj: Any, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 		if (obj == null) {
 			"null\n"
 		} else if (obj.isInstanceOf[String] ||
@@ -71,27 +69,25 @@ class ObjectPrinter extends Printer {
 				obj.isInstanceOf[Boolean]) {
 			obj + "\n"
 		} else if (checkForCustomPrinter(obj.getClass).isDefined) {
-			checkForCustomPrinter(obj.getClass).get._2.printObj("", obj, prefix, showTypes) + "\n"
+			checkForCustomPrinter(obj.getClass).get._2.printObj("", obj, prefix, showTypes, visited) + "\n"
 		} else if (visited.contains(obj)) {
 			"**RECURSION**\n"
 		} else {
-			visited.put(obj, true)
-			
 			if (obj.isInstanceOf[Map[_,_]]) {
 				"\n" + obj.asInstanceOf[Map[_,_]].foldLeft("") { case (str, (key, value)) =>
-					str + printObj(s"[${key}]", value, prefix + prefixInc, showTypes)
+					str + printObj(s"[${key}]", value, prefix + prefixInc, showTypes, obj :: visited)
 				}
 			} else if (obj.isInstanceOf[java.util.Map[_,_]]) {
 				"\n" + obj.asInstanceOf[java.util.Map[_,_]].foldLeft("") { case (str, (key, value)) =>
-					str + printObj(s"[${key}]", value, prefix + prefixInc, showTypes)
+					str + printObj(s"[${key}]", value, prefix + prefixInc, showTypes, obj :: visited)
 				}
 			} else if (obj.isInstanceOf[Iterable[_]]) {
 				"\n" + obj.asInstanceOf[Iterable[_]].foldLeft("", 0) { case ((str, i), item) =>
-					(str + printObj(s"[${i}]", item, prefix + prefixInc, showTypes), i + 1)
+					(str + printObj(s"[${i}]", item, prefix + prefixInc, showTypes, obj :: visited), i + 1)
 				}._1
 			} else if (obj.isInstanceOf[java.util.Collection[_]]) {
 				"\n" + obj.asInstanceOf[java.util.Collection[_]].foldLeft("", 0) { case ((str, i), item) =>
-					(str + printObj(s"[${i}]", item, prefix + prefixInc, showTypes), i + 1)
+					(str + printObj(s"[${i}]", item, prefix + prefixInc, showTypes, obj :: visited), i + 1)
 				}._1
 			} else {
 				val fields = getFields(obj)
@@ -100,7 +96,7 @@ class ObjectPrinter extends Printer {
 				} else {
 					"\n" + fields.foldLeft("") { (str, field) =>
 						field.setAccessible(true)
-						str + printObj(field.getName(), field.get(obj), prefix + prefixInc, showTypes)
+						str + printObj(field.getName(), field.get(obj), prefix + prefixInc, showTypes, obj :: visited)
 					}
 				}
 			}
@@ -113,11 +109,11 @@ class ObjectPrinter extends Printer {
 		}
 	}
 
-	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String = {
+	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 		if (showTypes) {
-			prefix + s"${name}: ${getObjType(obj)} = ${getValue(obj, prefix, showTypes)}"
+			prefix + s"${name}: ${getObjType(obj)} = ${getValue(obj, prefix, showTypes, visited)}"
 		} else {
-			prefix + s"${name} = ${getValue(obj, prefix, showTypes)}"
+			prefix + s"${name} = ${getValue(obj, prefix, showTypes, visited)}"
 		}
 	}
 
@@ -131,5 +127,5 @@ class ObjectPrinter extends Printer {
 }
 
 trait Printer {
-	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean): String
+	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String
 }
