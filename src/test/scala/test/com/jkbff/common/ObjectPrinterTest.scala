@@ -21,10 +21,10 @@ class ObjectPrinterTest extends FunSuite {
 	test("getClassHierarchy()") {
 		val objectPrinter = new ObjectPrinter
 
-		val testclass = new TestClass2("hi", "bye1")
+		val testClass = new TestClass2("hi", "bye1")
 		
 		val expected = List(classOf[TestClass2], classOf[TestClass])
-		val result = objectPrinter.getClassHierarchy(testclass.getClass()).takeWhile(_.getName() != "java.lang.Object").toList
+		val result = objectPrinter.getClassHierarchy(testClass.getClass()).takeWhile(_.getName() != "java.lang.Object").toList
 		
 		assert(result == expected)
 	}
@@ -32,28 +32,16 @@ class ObjectPrinterTest extends FunSuite {
 	test("checkForCustomPrinter()") {
 		val testPrinter = new ObjectPrinter
 
-		class Test1 {
+		val customPrinter = new SomeCustomPrinter(testPrinter)
 
-		}
+		testPrinter.addCustom(classOf[Test1], customPrinter)
 
-		class Test2 extends Test1 {
-
-		}
-
-		class Test3 extends Test2
-
-		testPrinter.addCustom(classOf[Test1], new Printer {
-			def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
-				"\n" + prefix + testPrinter.prefixInc + "test1: " + obj.getClass
-			}
-		})
-
-		val expected = "obj = \n  test1: class test.com.jkbff.common.ObjectPrinterTest$$anonfun$3$Test3$1\n"
-		val result = testPrinter.printObj(new Test3, false)
-
-		assert(result == expected)
+		assert(testPrinter.checkForCustomPrinter(classOf[Test1]).get._2 == customPrinter)
+		assert(testPrinter.checkForCustomPrinter(classOf[Test2]).get._2 == customPrinter)
+		assert(testPrinter.checkForCustomPrinter(classOf[Test3]).get._2 == customPrinter)
+		assert(testPrinter.checkForCustomPrinter(classOf[Test4]).isEmpty)
 	}
-	
+
 	test("printObj() for a string") {
 		val objectPrinter = new ObjectPrinter
 
@@ -148,6 +136,17 @@ class ObjectPrinterTest extends FunSuite {
 
 		assert(result == expected)
 	}
+
+	test("printObj() with a custom printer") {
+		val testPrinter = new ObjectPrinter
+
+		testPrinter.addCustom(classOf[Test1], new SomeCustomPrinter(testPrinter))
+
+		val expected = "obj = \n  test1: class test.com.jkbff.common.Test3\n"
+		val result = testPrinter.printObj(new Test3, false)
+
+		assert(result == expected)
+	}
 }
 
 class TestClass(val hello: String, val goodBye: String) {
@@ -169,6 +168,16 @@ class TestClass2(hello: String, goodBye: String) extends TestClass(hello, goodBy
 	val someMap = Map("aa" -> "jason", "bb" -> "jodie", "cc" -> "jamie", "dd" -> "kelsie", "ee" -> "casey", "ff" -> "cody")
 }
 
+class Test1 {
+
+}
+
+class Test2 extends Test1 {
+
+}
+
+class Test3 extends Test2
+
 class Test4 {
 	val someRef: Any = null
 }
@@ -176,4 +185,10 @@ class Test4 {
 class LeftRight {
 	var left: LeftRight = null
 	var right: LeftRight = null
+}
+
+class SomeCustomPrinter(objectPrinter: ObjectPrinter) extends Printer {
+	def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
+		"\n" + prefix + objectPrinter.prefixInc + "test1: " + obj.getClass
+	}
 }
