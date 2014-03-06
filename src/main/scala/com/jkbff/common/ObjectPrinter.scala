@@ -6,15 +6,17 @@ import scala.annotation.tailrec
 import collection.mutable
 import collection.JavaConversions._
 
-class ObjectPrinter extends Printer {
-	val prefixInc = "  "
-
+class ObjectPrinter(val prefixInc: String) extends Printer {
 	val custom = mutable.Map[Class[_], Printer]()
 
 	val toStringPrinter =  new Printer {
 		def printObj[T](name: String, obj: T, prefix: String, showTypes: Boolean, visited: List[Any]): String = {
 			obj.toString
 		}
+	}
+
+	def this() {
+		this("    ")
 	}
 	
 	def addStandardPrinters(): ObjectPrinter = {
