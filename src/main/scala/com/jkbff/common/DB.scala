@@ -8,6 +8,10 @@ import javax.sql.DataSource
 class DB(ds: DataSource) {
 	val connection = ds.getConnection()
 
+	def query[T](sql: String, rowMapper: ResultSet => T): List[T] = {
+		query(sql, Seq(), rowMapper)
+	}
+
 	def query[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T): List[T] = {
 		using(connection.prepareStatement(sql)) { stmt =>
 			setParams(stmt, params)
@@ -44,10 +48,6 @@ class DB(ds: DataSource) {
 			setParams(stmt, params)
 			stmt.executeUpdate()
 		}
-	}
-
-	def query[T](sql: String, rowMapper: ResultSet => T): List[T] = {
-		query(sql, Seq(), rowMapper)
 	}
 
 	def setParams(stmt: PreparedStatement, params: Seq[Any]): Unit = {
