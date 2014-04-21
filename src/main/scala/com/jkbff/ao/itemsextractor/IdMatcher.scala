@@ -7,7 +7,7 @@ import scala.io.Source
 import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
 import javax.sql.DataSource
-import com.jkbff.common.Helper
+import com.jkbff.common.Helper._
 import com.jkbff.common.DB
 
 class IdMatcher {
@@ -36,7 +36,7 @@ class IdMatcher {
 	def writeSqlFile(entries: Seq[Entry], file: String) {
 		val outputdb = new DB(h2Ds)
 
-		val elapsed = Helper.stopwatch{
+		val elapsed = stopwatch {
 			outputdb.update("DROP TABLE IF EXISTS entries")
 			outputdb.update("DROP TABLE IF EXISTS aodb")
 			outputdb.update("CREATE TABLE entries (aoid INT, ql INT, name TEXT, icon INT, itemtype TEXT, hash TEXT)")
@@ -317,24 +317,22 @@ class IdMatcher {
 	def outputSqlFile(db: DB, file: String) {
 		log.debug("writing results to file: '%s'".format(file))
 		
-		val writer = new PrintWriter(file)
+		using(new PrintWriter(file)) { writer =>
+			writer.println("DROP TABLE IF EXISTS aodb;")
+			writer.println("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT);")
 
-		writer.println("DROP TABLE IF EXISTS aodb;")
-		writer.println("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT);")
+			val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) })
 
-		val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) })
-
-		items foreach { item =>
-			writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''"), item.icon))
+			items foreach { item =>
+				writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''"), item.icon))
+			}
 		}
-		writer.close()
 	}
 
 	def readEntriesFromFile(file: String): List[String] = {
 		log.debug("reading entries from file: " + file)
-		val source = Source.fromFile(file)
-		val lines = source.getLines.toList map (_.trim) filter (_ != "")
-		source.close()
-		lines
+		using(Source.fromFile(file)) { source =>
+			source.getLines.toList map (_.trim) filter (_ != "")
+		}
 	}
 }
