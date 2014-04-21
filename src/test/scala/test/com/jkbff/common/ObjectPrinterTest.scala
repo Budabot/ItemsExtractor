@@ -9,7 +9,7 @@ import com.jkbff.common.Printer
 @RunWith(classOf[JUnitRunner])
 class ObjectPrinterTest extends FunSuite {
 	test("getFields()") {
-		val objectPrinter = new ObjectPrinter
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val obj = new TestClass2("hi", "bye1")
 		
@@ -19,7 +19,7 @@ class ObjectPrinterTest extends FunSuite {
 	}
 	
 	test("getClassHierarchy()") {
-		val objectPrinter = new ObjectPrinter
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val testClass = new TestClass2("hi", "bye1")
 		
@@ -30,7 +30,7 @@ class ObjectPrinterTest extends FunSuite {
 	}
 
 	test("checkForCustomPrinter()") {
-		val testPrinter = new ObjectPrinter
+		val testPrinter = new ObjectPrinter("  ")
 
 		val customPrinter = new SomeCustomPrinter(testPrinter)
 
@@ -42,26 +42,27 @@ class ObjectPrinterTest extends FunSuite {
 		assert(testPrinter.checkForCustomPrinter(classOf[Test4]).isEmpty)
 	}
 
-	test("printObj() for a string") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj for a string") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val expected = "obj: String = hi\n"
 		
 		assert(objectPrinter.printObj("hi", true) == expected)
 	}
 	
-	test("printObj() for an object with no fields") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj for an object with no fields") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val testclass = new AnyRef
 		
 		val expected = "obj = \n  <no fields>\n"
+		val result = objectPrinter.printObj(testclass, false)
 		
-		assert(objectPrinter.printObj(testclass, false) == expected)
+		assert(result == expected)
 	}
 	
-	test("printObj() for a java Collection") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj for a java Collection") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val list = new java.util.ArrayList[String]
 		list.add("hello")
@@ -73,8 +74,8 @@ class ObjectPrinterTest extends FunSuite {
 		assert(objectPrinter.printObj(list, true) == expected)
 	}
 	
-	test("printObj() for a java map") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj for a java map") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val map = new java.util.HashMap[String, String]()
 		map.put("first", "a1")
@@ -86,16 +87,16 @@ class ObjectPrinterTest extends FunSuite {
 		assert(objectPrinter.printObj(map, true) == expected)
 	}
 	
-	test("printObj() for a complex object") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj for a complex object") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val expected = "obj: test.com.jkbff.common.TestClass2 = \n  nest1: test.com.jkbff.common.TestClass = \n    hello: String = hola\n    goodBye: String = adios\n  nest2: test.com.jkbff.common.TestClass = \n    hello: String = bonjour!\n    goodBye: String = adieu\n  intVal: Integer = 987\n  longInt: Long = 1234\n  dub: Double = 12.34\n  floatingPoint: Float = 123.456\n  shortVal: Short = 123\n  byteVal: Byte = 111\n  charVal: Character = J\n  someList: scala.collection.immutable.$colon$colon = \n    [0]: Integer = 1\n    [1]: Integer = 2\n    [2]: Integer = 3\n  someSet: scala.collection.immutable.Set$Set3 = \n    [0]: String = a\n    [1]: String = b\n    [2]: String = c\n  someMap: scala.collection.immutable.HashMap$HashTrieMap = \n    [cc]: String = jamie\n    [aa]: String = jason\n    [bb]: String = jodie\n    [ee]: String = casey\n    [ff]: String = cody\n    [dd]: String = kelsie\n  hello: String = hi\n  goodBye: String = bye1\n"
 		
 		assert(objectPrinter.printObj(new TestClass2("hi", "bye1"), true) == expected)
 	}
 
-	test("printObj() with null values") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj with null values") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val obj = new Test4
 
@@ -105,8 +106,8 @@ class ObjectPrinterTest extends FunSuite {
 		assert(result == expected)
 	}
 
-	test("printObj() with simple recursive values") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj with simple recursive values") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val obj = new LeftRight
 		obj.left = obj
@@ -118,8 +119,8 @@ class ObjectPrinterTest extends FunSuite {
 		assert(result == expected)
 	}
 
-	test("printObj() with complex recursive values") {
-		val objectPrinter = new ObjectPrinter
+	test("printObj with complex recursive values") {
+		val objectPrinter = new ObjectPrinter("  ")
 
 		val root = new LeftRight
 		root.left = new LeftRight
@@ -137,8 +138,8 @@ class ObjectPrinterTest extends FunSuite {
 		assert(result == expected)
 	}
 
-	test("printObj() with a custom printer") {
-		val testPrinter = new ObjectPrinter
+	test("printObj with a custom printer") {
+		val testPrinter = new ObjectPrinter("  ")
 
 		testPrinter.addCustom(classOf[Test1], new SomeCustomPrinter(testPrinter))
 
