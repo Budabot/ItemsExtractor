@@ -4,11 +4,16 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import com.jkbff.common.Helper.using
 import javax.sql.DataSource
+import java.util.regex.Matcher
+import org.apache.log4j.Logger
+import com.jkbff.ao.itemsextractor.Program
 
 class DB(ds: DataSource) {
+	private val log = Logger.getLogger(Program.getClass())
 	val connection = ds.getConnection()
 
 	def query[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T): List[T] = {
+		logQuery(sql, params)
 		using(connection.prepareStatement(sql)) { stmt =>
 			setParams(stmt, params)
 			using(stmt.executeQuery()) { rs =>
@@ -18,6 +23,7 @@ class DB(ds: DataSource) {
 	}
 	
 	def querySingle[T](sql: String, params: Seq[Any], rowMapper: ResultSet => T): Option[T] = {
+		logQuery(sql, params)
 		using(connection.prepareStatement(sql)) { stmt =>
 			setParams(stmt, params)
 			using(stmt.executeQuery()) { rs =>
@@ -42,6 +48,7 @@ class DB(ds: DataSource) {
 	}
 	
 	def update(sql: String, params: Seq[Any]): Int = {
+		logQuery(sql, params)
 		using(connection.prepareStatement(sql)) { stmt =>
 			setParams(stmt, params)
 			stmt.executeUpdate()
@@ -52,7 +59,7 @@ class DB(ds: DataSource) {
 		update(sql, Seq())
 	}
 	
-	def transaction[T]()(op: => T): T = {
+	def transaction[T](op: => T): T = {
 		try {
 			connection.setAutoCommit(false)
 			val result = op
@@ -89,5 +96,14 @@ class DB(ds: DataSource) {
 		(1 to meta.getColumnCount()).foldLeft(List[String]()) { (params, i) =>
 			meta.getColumnLabel(i) :: params
 		}.reverse
+	}
+	
+	def logQuery(sql: String, params: Seq[Any]) {
+		if (log.isDebugEnabled()) {
+			val newSql = params.foldLeft(sql) ( (str, x) => {
+				str.replaceFirst("\\?", "'" + Matcher.quoteReplacement(if (x == null) "null" else x.toString()) + "'")
+			})
+			log.debug(newSql)
+		}
 	}
 }
