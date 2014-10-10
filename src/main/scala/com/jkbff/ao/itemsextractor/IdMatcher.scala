@@ -49,7 +49,7 @@ class IdMatcher {
 
 			processStaticList(outputdb, readEntriesFromFile("static_list.txt"))
 			processDeleteList(outputdb, readEntriesFromFile("delete_list.txt"))
-			processNameSeparations(outputdb, readEntriesFromFile("nameseperation_list.txt"))
+			processNameSeparations(outputdb, readEntriesFromFile("nameseparation_list.txt"))
 			processRemaingingEntries(outputdb)
 			outputSqlFile(outputdb, file)
 		}
