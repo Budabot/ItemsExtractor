@@ -30,9 +30,7 @@ class MultiRandomAccessFile(files: Seq[String]) {
 	def readShortLittleEndian() = readLittleEndianShort(currentFile)
 	
 	def readString(length: Int): String = {
-		val b = new Array[Byte](length)
-		currentFile.readFully(b)
-		new String(b)
+		new String(read(length))
 	}
 	
 	def read(length: Int): Array[Byte] = {
