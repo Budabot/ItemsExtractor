@@ -1,7 +1,7 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.ao.itemsextractor.rdb
+
 import java.io.RandomAccessFile
 import scala.annotation.tailrec
-import java.io.DataInput
 import RDBFunctions._
 
 class MultiRandomAccessFile(files: Seq[String]) {

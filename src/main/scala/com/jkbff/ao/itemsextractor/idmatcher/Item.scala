@@ -1,4 +1,5 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.ao.itemsextractor.idmatcher
+
 import java.sql.ResultSet
 
 class Item(val lowId: Int, val highId: Int, val lowQl: Int, val highQl: Int, val name: String, val icon: Int) {

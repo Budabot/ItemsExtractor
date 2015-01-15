@@ -1,13 +1,11 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.ao.itemsextractor.rdb.index
 
 import java.io.RandomAccessFile
-import RDBFunctions._
+import com.jkbff.ao.itemsextractor.rdb.RDBFunctions._
 import scala.annotation.tailrec
 
 class RDBIndexReader(in: RandomAccessFile) {
-	val AODB_ITEM_TYPE = 0x000f4254
-	
-	class IndexBlock(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: Seq[Record]) {
+	class IndexBlock(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: Seq[IndexRecord]) {
 		
 		override def toString() = {
 			"offset: " + offset +
@@ -51,18 +49,18 @@ class RDBIndexReader(in: RandomAccessFile) {
 		
 		// skip block header
 		in.skipBytes(18)
-		val records = (1 to count).foldLeft(List[Record]()) { (list, number) =>
+		val records = (1 to count).foldLeft(List[IndexRecord]()) { (list, number) =>
 			readRecord(in) :: list
 		}
 		
 		new IndexBlock(offset, nextBlock, prevBlock, records.reverse)
 	}
 	
-	def readRecord(in: RandomAccessFile): Record = {
+	def readRecord(in: RandomAccessFile): IndexRecord = {
 		val offset = readMiddleEndianLong(in)
 		val resourceType = in.readInt()
 		val resourceId = in.readInt()
 		
-		new Record(resourceType, resourceId, offset)
+		new IndexRecord(resourceType, resourceId, offset)
 	}
 }

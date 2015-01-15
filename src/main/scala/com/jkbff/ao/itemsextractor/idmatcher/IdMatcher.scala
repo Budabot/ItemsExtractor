@@ -1,39 +1,39 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.ao.itemsextractor.idmatcher
 
 import java.io.PrintWriter
-import java.io.RandomAccessFile
 import java.sql.ResultSet
 import scala.io.Source
 import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
-import javax.sql.DataSource
-import com.jkbff.common.Helper._
+import com.jkbff.ao.itemsextractor.rdb.RDBFunctions
+import com.jkbff.ao.itemsextractor.rdb.RDBItem
+import com.jkbff.ao.itemsextractor.rdb.constants.Attribute
 import com.jkbff.common.DB
+import com.jkbff.common.Helper._
+import com.jkbff.ao.itemsextractor.rdb.constants.CanFlag
 
 class IdMatcher {
 
 	val log = Logger.getLogger(this.getClass())
 
-	lazy val sqliteDs = {
-		val ds = new BasicDataSource()
-		ds.setDriverClassName("org.sqlite.JDBC")
-		ds.setUrl("jdbc:sqlite::memory:")
-		ds.setUsername("")
-		ds.setPassword("")
-		ds
-	}
-
-	lazy val h2Ds = {
-		val ds = new BasicDataSource()
+	lazy val h2Ds = init(new BasicDataSource()) { ds =>
 		ds.setDriverClassName("org.h2.Driver")
 		//ds.setUrl("jdbc:h2:mem:db1;IGNORECASE=true")
 		ds.setUrl("jdbc:h2:mem:db1")
 		ds.setUsername("")
 		ds.setPassword("")
-		ds
 	}
 
-	def writeSqlFile(entries: Seq[Entry], file: String) {
+	def writeSqlFile(rdbItems: Seq[RDBItem], aoPath: String) {
+		val entries = rdbItems.map { item =>
+			val iconAttribute = item.attributes.getOrElse(Attribute.Icon, 0L)
+			val qlAttribute = item.attributes.getOrElse(Attribute.Level, 0L)
+			val itemTypeAttribute = item.attributes.getOrElse(Attribute.ItemClass, 0L)
+				
+			new Entry(item.id.toInt, qlAttribute.toInt, item.name, iconAttribute.toInt, RDBFunctions.getItemType(itemTypeAttribute))
+		}
+		
+		val version = getVersion(aoPath)
 		val outputdb = new DB(h2Ds)
 
 		val elapsed = stopwatch {
@@ -51,18 +51,14 @@ class IdMatcher {
 			processDeleteList(outputdb, readEntriesFromFile("delete_list.txt"))
 			processNameSeparations(outputdb, readEntriesFromFile("nameseparation_list.txt"))
 			processRemaingingEntries(outputdb)
-			outputSqlFile(outputdb, file)
+			
+			val itemsDbFilename = "aodb" + version + ".sql"
+			outputSqlFile(outputdb, itemsDbFilename)
+			
+			val weaponAttributesFilename = "weapon_attributes" + version + ".sql"
+			outputWeaponAttributes(rdbItems, outputdb, weaponAttributesFilename)
 		}
 		log.info("Elapsed time: %ds".format(elapsed / 1000))
-	}
-
-	def getDatasource(url: String): DataSource = {
-		val ds = new BasicDataSource()
-		ds.setDriverClassName("org.sqlite.JDBC")
-		ds.setUrl(url)
-		ds.setUsername("")
-		ds.setPassword("")
-		ds
 	}
 
 	def processNameSeparations(db: DB, nameSeparationList: Seq[String]) {
@@ -328,11 +324,58 @@ class IdMatcher {
 			}
 		}
 	}
+	
+	def outputWeaponAttributes(rdbItems: Seq[RDBItem], db: DB, file: String) {
+		val itemMap = rdbItems  map { x =>
+			(x.id, x)
+		} toMap
+		
+		val weapons = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) }).foldLeft(List[RDBItem]()) { (list, item) =>
+			if (item.highId != item.lowId) {
+				itemMap(item.lowId) :: itemMap(item.highId) :: list
+			} else {
+				itemMap(item.highId) :: list
+			}
+		} filter { x => 
+			x.attributes.get(Attribute.ItemDelay).isDefined &&
+			x.attributes.get(Attribute.RechargeDelay).isDefined
+		}
+		
+		using(new PrintWriter(file)) { writer =>
+			writer.println("DROP TABLE IF EXISTS weapon_attributes;")
+			writer.println("CREATE TABLE weapon_attributes (id INT, attack_time INT, recharge_time INT, full_auto INT, burst INT, fling_shot TINYINT NOT NULL, fast_attack TINYINT NOT NULL, aimed_shot TINYINT NOT NULL);")
+			
+			weapons foreach { item =>
+				val flags = item.attributes(Attribute.Can)
+				
+				writer.println("INSERT INTO weapon_attributes VALUES (%s, %s, %s, %s, %s, %s, %s, %s);".
+						format(item.id,
+								item.attributes(Attribute.ItemDelay),
+								item.attributes(Attribute.RechargeDelay),
+								item.attributes.getOrElse(Attribute.FullAutoRecharge, "null"),
+								item.attributes.getOrElse(Attribute.BurstRecharge, "null"),
+								(if (getFlag(CanFlag.FlingShot, flags)) "1" else "0"),
+								(if (getFlag(CanFlag.FastAttack, flags)) "1" else "0"),
+								(if (getFlag(CanFlag.AimedShot, flags)) "1" else "0")))
+			}
+		}
+	}
 
 	def readEntriesFromFile(file: String): List[String] = {
 		log.debug("reading entries from file: " + file)
 		using(Source.fromFile(file)) { source =>
 			source.getLines.toList map (_.trim) filter (_ != "")
 		}
+	}
+	
+	def getVersion(aoPath: String): String = {
+		val source = Source.fromFile(aoPath + "version.id")
+		val pieces = source.mkString.trim.replace("_EP1", "").split("\\.").map(_.toInt)
+		source.close()
+		"%02d.%02d.%02d.%02d".format(pieces(0), pieces(1), pieces(2), 0)
+	}
+	
+	def getFlag(flagId: Long, input: Long): Boolean = {
+		return (flagId & input) == flagId
 	}
 }

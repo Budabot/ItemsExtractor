@@ -1,9 +1,10 @@
 package com.jkbff.ao.itemsextractor
 
+import org.apache.log4j.Logger
+
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.ParameterException
-import com.jkbff.common.EnrichedString._
-import org.apache.log4j.Logger
+import com.jkbff.common.EnrichedString.stringToEnrichedString
 
 object Program extends App {
 	val log = Logger.getLogger(this.getClass())

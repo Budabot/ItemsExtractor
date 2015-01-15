@@ -1,6 +1,6 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.ao.itemsextractor.rdb
+
 import org.apache.poi.util.LittleEndian
-import java.io.RandomAccessFile
 import java.io.DataInput
 
 object RDBFunctions {

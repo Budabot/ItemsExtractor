@@ -1,4 +1,4 @@
-package com.jkbff.ao.itemsextractor
+package com.jkbff.ao.itemsextractor.idmatcher
 
 import java.sql.ResultSet
 

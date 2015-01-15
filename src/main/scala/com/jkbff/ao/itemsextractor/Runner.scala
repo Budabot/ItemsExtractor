@@ -2,8 +2,14 @@ package com.jkbff.ao.itemsextractor
 
 import java.io.File
 import java.io.RandomAccessFile
+import scala.Array.canBuildFrom
 import scala.io.Source
 import org.apache.log4j.Logger
+import com.jkbff.ao.itemsextractor.idmatcher.IdMatcher
+import com.jkbff.ao.itemsextractor.rdb.MultiRandomAccessFile
+import com.jkbff.ao.itemsextractor.rdb.RDBExtractor
+import com.jkbff.ao.itemsextractor.rdb.RDBItem
+import com.jkbff.ao.itemsextractor.rdb.index.RDBIndexReader
 
 class Runner (aoPath: String) {
 	val log = Logger.getLogger(this.getClass())
@@ -14,33 +20,22 @@ class Runner (aoPath: String) {
 	val AODB_ITEM_TYPE = 0x000f4254
 	val AODB_TYP_NANO = 0x000fde85
 	
+	val rdbExtractor = new RDBExtractor()
+	
 	def run(): Unit = {
-		new IdMatcher().writeSqlFile(getEntries, "aodb" + getVersion(aoPath) + ".sql")
+		new IdMatcher().writeSqlFile(getEntries, aoPath)
 	}
 	
-	def getEntries(): Seq[Entry] = {
-		val nullAttribute = new RDBAttribute(0, 0)
+	def getEntries(): Seq[RDBItem] = {
 		log.debug("reading index file entries")
-		new RDBIndexReader(indexFile).resourceTypeMap(AODB_ITEM_TYPE) map { x =>
-			val item = new ItemExtractor().readItem(db, x)
-			val iconAttribute = item.attributes.find(_.id == 79)
-			val qlAttribute = item.attributes.find(_.id == 54)
-			val itemTypeAttribute = item.attributes.find(_.id == 76)
-			
-			new Entry(item.id.toInt, qlAttribute.getOrElse(nullAttribute).value.toInt, item.name, iconAttribute.getOrElse(nullAttribute).value.toInt, RDBFunctions.getItemType(itemTypeAttribute.getOrElse(nullAttribute).value))
-		}
+		val entries = new RDBIndexReader(indexFile).resourceTypeMap(AODB_ITEM_TYPE) map { rdbExtractor.readItem(db, _) }
+		log.debug("read " + entries.size + " entries")
+		entries
 	}
 	
 	def getSingleItem(id: Long): RDBItem = {
 		val record = new RDBIndexReader(indexFile).resourceTypeMap(AODB_ITEM_TYPE).find(_.resourceId == id).get
-		new ItemExtractor().readItem(db, record)
-	}
-	
-	def getVersion(aoPath: String): String = {
-		val source = Source.fromFile(aoPath + "version.id")
-		val pieces = source.mkString.trim.replace("_EP1", "").split("\\.").map(_.toInt)
-		source.close()
-		"%02d.%02d.%02d.%02d".format(pieces(0), pieces(1), pieces(2), 0)
+		rdbExtractor.readItem(db, record)
 	}
 	
 	def getDatabaseFiles(): Seq[String] = {
