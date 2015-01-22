@@ -326,6 +326,8 @@ class IdMatcher {
 	}
 	
 	def outputWeaponAttributes(rdbItems: Seq[RDBItem], db: DB, file: String) {
+		log.debug("writing weapon attributes to file: '%s'".format(file))
+		
 		val itemMap = rdbItems  map { x =>
 			(x.id, x)
 		} toMap
