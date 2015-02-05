@@ -18,7 +18,7 @@ class Runner (aoPath: String) {
 	lazy val indexFile = new RandomAccessFile(aoPath + "cd_image/data/db/ResourceDatabase.idx", "r")
 
 	val AODB_ITEM_TYPE = 0x000f4254
-	val AODB_TYP_NANO = 0x000fde85
+	val AODB_NANO_TYPE = 0x000fde85
 	
 	val rdbExtractor = new RDBExtractor()
 	

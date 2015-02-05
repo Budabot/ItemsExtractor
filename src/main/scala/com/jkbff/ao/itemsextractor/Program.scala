@@ -22,7 +22,9 @@ object Program extends App {
 	}
 	
 	try {
-		new Runner(commandLineArguments.aoPath.replaceAll("\"", "").replaceAll("\\\\", "/").addEndingIfNeeded("/")).run()
+		val path = commandLineArguments.aoPath.replaceAll("\"", "").replaceAll("\\\\", "/").addEndingIfNeeded("/")
+		
+		new Runner(path).run()
 	} catch {
 		case e: Exception => log.error("", e)
 	}
