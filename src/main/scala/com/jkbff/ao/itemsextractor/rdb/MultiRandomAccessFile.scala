@@ -6,12 +6,11 @@ import RDBFunctions._
 
 class MultiRandomAccessFile(files: Seq[String]) {
 	val inputs = files map (new RandomAccessFile(_, "r"))
-	var currentFile = inputs(0)
 	
-	def seek(pos: Long) {
+	def seek(pos: Long): RandomAccessFile = {
 		val x = findInput(pos, inputs)
-		currentFile = x._1
-		currentFile.seek(x._2)
+		x._1.seek(x._2)
+		x._1
 	}
 	
 	@tailrec
@@ -22,20 +21,5 @@ class MultiRandomAccessFile(files: Seq[String]) {
 		} else {
 			(file, pos)
 		}
-	}
-	
-	def skipBytes(num: Int) = currentFile.skipBytes(num)
-	
-	def readIntLittleEndian() = readLittleEndianInt(currentFile)
-	def readShortLittleEndian() = readLittleEndianShort(currentFile)
-	
-	def readString(length: Int): String = {
-		new String(read(length))
-	}
-	
-	def read(length: Int): Array[Byte] = {
-		val b = new Array[Byte](length)
-		currentFile.readFully(b)
-		b
 	}
 }

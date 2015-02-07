@@ -34,4 +34,14 @@ object RDBFunctions {
 			case 5 => "Spirit"
 		}
 	}
+	
+	def readString(in: DataInput, length: Int): String = {
+		new String(read(in, length))
+	}
+	
+	def read(in: DataInput, length: Int): Array[Byte] = {
+		val b = new Array[Byte](length)
+		in.readFully(b)
+		b
+	}
 }
