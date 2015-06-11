@@ -21,7 +21,7 @@ object RDBFunctions {
 	}
 
 	def int3F1(n: Long): Long = {
-		return math.round((n / 1009) - 1)
+		(n / 1009) - 1
 	}
 
 	def getItemType(value: Long): String = {

@@ -14,7 +14,7 @@ import com.jkbff.ao.itemsextractor.rdb.constants.CanFlag
 
 class IdMatcher {
 
-	val log = Logger.getLogger(this.getClass())
+	val log = Logger.getLogger(this.getClass)
 
 	lazy val h2Ds = init(new BasicDataSource()) { ds =>
 		ds.setDriverClassName("org.h2.Driver")
@@ -328,9 +328,7 @@ class IdMatcher {
 	def outputWeaponAttributes(rdbItems: Seq[RDBItem], db: DB, file: String) {
 		log.debug("writing weapon attributes to file: '%s'".format(file))
 		
-		val itemMap = rdbItems  map { x =>
-			(x.id, x)
-		} toMap
+		val itemMap = rdbItems.map(x => (x.id, x)).toMap
 		
 		val weapons = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) }).foldLeft(List[RDBItem]()) { (list, item) =>
 			if (item.highId != item.lowId) {
@@ -365,8 +363,8 @@ class IdMatcher {
 
 	def readEntriesFromFile(file: String): List[String] = {
 		log.debug("reading entries from file: " + file)
-		using(Source.fromFile(file)) { source =>
-			source.getLines.toList map (_.trim) filter (_ != "")
+		using(Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(file))) { source =>
+			source.getLines().toList map (_.trim) filter (_ != "")
 		}
 	}
 	
@@ -378,6 +376,6 @@ class IdMatcher {
 	}
 	
 	def getFlag(flagId: Long, input: Long): Boolean = {
-		return (flagId & input) == flagId
+		(flagId & input) == flagId
 	}
 }
