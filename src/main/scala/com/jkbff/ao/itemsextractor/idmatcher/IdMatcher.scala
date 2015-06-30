@@ -240,19 +240,17 @@ class IdMatcher {
 		while (i < entries.size - 1) {
 			if (entries(i).ql == entries(i + 1).ql - 1) {
 				log.debug("QLs already split for: '" + entries(i).ql + "' and '" + entries(i + 1).ql + "'")
-				tempEntries = entries(i) :: tempEntries
-				tempEntries = entries(i + 1) :: tempEntries
+				tempEntries = entries(i + 1) :: entries(i) :: tempEntries
 				i += 2
 			} else {
 				log.debug("Splitting QLs for: '" + entries(i).ql + "'")
 				val entry = new Entry(entries(i).id, entries(i).ql - 1, entries(i).name, entries(i).iconId, entries(i).itemType)
-				tempEntries = entry :: tempEntries
-				tempEntries = entries(i) :: tempEntries
+				tempEntries = entries(i) :: entry :: tempEntries
 				i += 1
 			}
 		}
 		if (i < entries.size) {
-			tempEntries = entries(entries.size - 1) :: tempEntries
+			tempEntries = entries.last :: tempEntries
 		}
 
 		addEntryItems(db, tempEntries.reverse)
@@ -267,8 +265,12 @@ class IdMatcher {
 				// if pair entries have sequential qls, add them as individual items
 				addItem(db, pair(0), pair(0))
 				addItem(db, pair(1), pair(1))
+			} else if (pair(0).name != pair(1).name) {
+				// split pairs when name does not match
+				addItem(db, pair(0), new Entry(pair(1).id, pair(1).ql - 1, pair(0).name, pair(0).iconId, pair(0).itemType))
+				addItem(db, pair(1), pair(1))
 			} else {
-				// add pair entries as item
+				// add pair entries as single item
 				addItem(db, pair(0), pair(1))
 			}
 		}
