@@ -1,4 +1,4 @@
-package com.jkbff.ao.itemsextractor.rdb
+package com.jkbff.ao.itemsextractor.rdb.constants
 
 object ItemType {
 	val WEAPON = 1
