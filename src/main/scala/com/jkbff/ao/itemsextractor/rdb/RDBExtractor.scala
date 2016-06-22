@@ -46,10 +46,17 @@ class RDBExtractor {
 						case 6 =>
 							unknown(file)
 
+						case 14 =>
+							// animation
+
 						case 22 =>
 							criteriaList = parseCriteria(file)
 
-						case _ => break
+						case 23 =>
+							// shop
+
+						case _ =>
+							break
 					}
 				}
 			}
