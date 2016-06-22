@@ -11,6 +11,7 @@ import com.jkbff.ao.itemsextractor.rdb.constants.Attribute
 import com.jkbff.common.DB
 import com.jkbff.common.Helper._
 import com.jkbff.ao.itemsextractor.rdb.constants.CanFlag
+import java.nio.file.{Paths, Files}
 
 class IdMatcher {
 
@@ -33,7 +34,6 @@ class IdMatcher {
 			new Entry(item.id.toInt, qlAttribute.toInt, item.name, iconAttribute.toInt, RDBFunctions.getItemType(itemTypeAttribute))
 		}
 		
-		val version = getVersion(aoPath)
 		val outputdb = new DB(h2Ds)
 
 		val elapsed = stopwatch {
@@ -51,14 +51,25 @@ class IdMatcher {
 			processDeleteList(outputdb, readEntriesFromFile("delete_list.txt"))
 			processNameSeparations(outputdb, readEntriesFromFile("nameseparation_list.txt"))
 			processRemaingingEntries(outputdb)
-			
-			val itemsDbFilename = "aodb" + version + ".sql"
+
+			val itemsDbFilename = getNewFileName(aoPath, "aodb{version}.sql")
 			outputSqlFile(outputdb, itemsDbFilename)
-			
-			val weaponAttributesFilename = "weapon_attributes" + version + ".sql"
+
+			val weaponAttributesFilename = getNewFileName(aoPath, "weapon_attributes{version}.sql")
 			outputWeaponAttributes(rdbItems, outputdb, weaponAttributesFilename)
 		}
 		log.info("Elapsed time: %ds".format(elapsed / 1000))
+	}
+
+	@tailrec
+	def getNewFileName(aoPath: String, filename: String, buildNumber: Int = 0): String = {
+		val version = getVersion(aoPath, buildNumber)
+		val newFilename = filename.replaceAll("{version}", version)
+		if (Files.exists(Paths.get(newFilename))) {
+			getNewFileName(aoPath, filename, buildNumber + 1)
+		} else {
+			newFilename
+		}
 	}
 
 	def processNameSeparations(db: DB, nameSeparationList: Seq[String]) {
@@ -370,11 +381,11 @@ class IdMatcher {
 		}
 	}
 	
-	def getVersion(aoPath: String): String = {
+	def getVersion(aoPath: String, buildNumber: Int): String = {
 		val source = Source.fromFile(aoPath + "version.id")
 		val pieces = source.mkString.trim.replace("_EP1", "").split("\\.").map(_.toInt)
 		source.close()
-		"%02d.%02d.%02d.%02d".format(pieces(0), pieces(1), pieces(2), 0)
+		"%02d.%02d.%02d.%02d".format(pieces(0), pieces(1), pieces(2), buildNumber)
 	}
 	
 	def getFlag(flagId: Long, input: Long): Boolean = {
