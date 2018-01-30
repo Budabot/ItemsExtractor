@@ -22,4 +22,8 @@ class MultiRandomAccessFile(files: Seq[String]) {
 			(file, pos)
 		}
 	}
+
+	def close(): Unit = {
+		inputs.foreach(_.close())
+	}
 }

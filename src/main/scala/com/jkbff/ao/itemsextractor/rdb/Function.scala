@@ -1,11 +1,11 @@
 package com.jkbff.ao.itemsextractor.rdb
 
-class Function(val functionNum: Long,
-			   val iterationCount: Long,
-			   val iterationDelay: Long,
-			   val target: Long,
-			   val requirements: List[FunctionRequirement],
-			   val params: List[Any]) {
+case class Function(functionNum: Long,
+										iterationCount: Long,
+										iterationDelay: Long,
+										target: Long,
+										requirements: Seq[FunctionRequirement],
+										params: Seq[Any]) {
 
 	override def toString() = toString("")
 

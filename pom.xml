@@ -44,7 +44,7 @@
 		<dependency>
 			<groupId>com.jkbff.common</groupId>
 			<artifactId>scala-util</artifactId>
-			<version>1.1</version>
+			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ini4j</groupId>

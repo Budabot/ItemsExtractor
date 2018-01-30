@@ -14,6 +14,12 @@ object RDBFunctions {
 		LittleEndian.getUInt(b)
 	}
 
+	def readLittleEndianSignedInt(in: DataInput): Int = {
+		val b = new Array[Byte](4)
+		in.readFully(b)
+		LittleEndian.getInt(b)
+	}
+
 	def readLittleEndianShort(in: DataInput): Int = {
 		val b = new Array[Byte](2)
 		in.readFully(b)
@@ -21,20 +27,10 @@ object RDBFunctions {
 	}
 
 	def int3F1(n: Long): Long = {
+		//n >> 10
 		(n / 1009) - 1
 	}
 
-	def getItemType(value: Long): String = {
-		value match {
-			case 0 => "Misc"
-			case 1 => "Weapon"
-			case 2 => "Armor"
-			case 3 => "Implant"
-			case 4 => "Template"
-			case 5 => "Spirit"
-		}
-	}
-	
 	def readString(in: DataInput, length: Int): String = {
 		new String(read(in, length))
 	}

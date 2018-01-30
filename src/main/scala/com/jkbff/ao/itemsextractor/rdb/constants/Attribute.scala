@@ -647,6 +647,7 @@ object Attribute {
 	val ShopIndex = 656L
 	val ShopID = 657L
 	val IsVehicle = 658L
+	val HealReactivity = 689L
 	val ACGItemSeed = 700L
 	val ACGItemLevel = 701L
 	val ACGItemTemplateID = 702L

@@ -5,9 +5,9 @@ import com.jkbff.ao.itemsextractor.rdb.RDBFunctions._
 import scala.annotation.tailrec
 
 class RDBIndexReader(in: RandomAccessFile) {
-	class IndexBlock(val offset: Long, val nextBlock: Long, val previousBlock: Long, val records: Seq[IndexRecord]) {
+	case class IndexBlock(offset: Long, nextBlock: Long, previousBlock: Long, records: Seq[IndexRecord]) {
 		
-		override def toString() = {
+		override def toString(): String = {
 			"offset: " + offset +
 			"\nnextBlock: " + nextBlock +
 			"\npreviousBlock: " + previousBlock +
@@ -15,7 +15,7 @@ class RDBIndexReader(in: RandomAccessFile) {
 		}
 	}
 	
-	lazy val resourceTypeMap = {
+	def getRecords(): List[IndexRecord] = {
 		//println("last offset: " + readLittleEndianInt(in))
 		//println("data end: " + readLittleEndianInt(in))
 		//println("block size: " + readLittleEndianInt(in))
@@ -24,9 +24,7 @@ class RDBIndexReader(in: RandomAccessFile) {
 		//println("data start: " + dataStart)
 		//println
 		
-		val indexes = readIndexes(in, dataStart)
-		val records = indexes.flatMap(index => index.records).groupBy(x => x.resourceType)
-		records
+		readIndexes(in, dataStart).flatMap(index => index.records)
 	}
 	
 	@tailrec
@@ -49,11 +47,10 @@ class RDBIndexReader(in: RandomAccessFile) {
 		
 		// skip block header
 		in.skipBytes(18)
-		val records = (1 to count).foldLeft(List[IndexRecord]()) { (list, number) =>
-			readRecord(in) :: list
-		}
+
+		val records = (1 to count).map( _ => readRecord(in))
 		
-		new IndexBlock(offset, nextBlock, prevBlock, records.reverse)
+		IndexBlock(offset, nextBlock, prevBlock, records)
 	}
 	
 	def readRecord(in: RandomAccessFile): IndexRecord = {
@@ -61,6 +58,6 @@ class RDBIndexReader(in: RandomAccessFile) {
 		val resourceType = in.readInt()
 		val resourceId = in.readInt()
 		
-		new IndexRecord(resourceType, resourceId, offset)
+		IndexRecord(resourceType, resourceId, offset)
 	}
 }

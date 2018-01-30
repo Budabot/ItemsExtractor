@@ -4,19 +4,19 @@ class RDBItem(val id: Long,
 			  val name: String,
 			  val description: String,
 			  val attributes: Map[Long, Long],
-			  val attackDefense: List[AttackDefense],
-			  val functions: List[Function],
+			  val attackDefense: Seq[AttackDefense],
+			  val events: Seq[Event],
 			  val criteria: Seq[Criteria]) {
 
-	override def toString() = toString("")
+	override def toString(): String = toString("")
 
-	def toString(prefix: String) = {
+	def toString(prefix: String): String = {
 		"Id: " + id +
 				"\nName: " + name +
 				"\nDescription: " + description +
 				"\nAttributes:" + attributes.map("\n  " + _.toString).mkString +
 				(if (attackDefense != null) "\nAttackDefense:" + attackDefense.map("\n  " + _.toString).mkString else "") +
-				(if (functions != null) "\nFunctions:\n" + functions.map(_.toString(prefix + "  ")).mkString("\n\n") else "") +
+				events.map{ event => "\nEvent:\n" + event.toString(prefix) }.mkString +
 				(if (criteria != null) "\nCriteria:" + criteria.map("\n  " + _.toString).mkString else "")
 	}
 }
