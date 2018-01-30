@@ -2,22 +2,24 @@ package com.jkbff.ao.itemsextractor.idmatcher
 
 import java.io.PrintWriter
 import java.sql.ResultSet
+
 import scala.io.Source
 import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
 import com.jkbff.ao.itemsextractor.rdb.RDBFunctions
 import com.jkbff.ao.itemsextractor.rdb.RDBItem
-import com.jkbff.ao.itemsextractor.rdb.constants.Attribute
+import com.jkbff.ao.itemsextractor.rdb.constants._
 import com.jkbff.common.DB
 import com.jkbff.common.Helper._
-import com.jkbff.ao.itemsextractor.rdb.constants.CanFlag
-import java.nio.file.{Paths, Files}
+import java.nio.file.{Files, Paths}
+
+import scala.annotation.tailrec
 
 class IdMatcher {
 
-	val log = Logger.getLogger(this.getClass)
+	val log: Logger = Logger.getLogger(this.getClass)
 
-	lazy val h2Ds = init(new BasicDataSource()) { ds =>
+	lazy val h2Ds: BasicDataSource = init(new BasicDataSource()) { ds =>
 		ds.setDriverClassName("org.h2.Driver")
 		//ds.setUrl("jdbc:h2:mem:db1;IGNORECASE=true")
 		ds.setUrl("jdbc:h2:mem:db1")
@@ -25,13 +27,13 @@ class IdMatcher {
 		ds.setPassword("")
 	}
 
-	def writeSqlFile(rdbItems: Seq[RDBItem], aoPath: String) {
+	def writeSqlFile(rdbItems: Seq[RDBItem], rdbNanos: Seq[RDBItem], aoPath: String) {
 		val entries = rdbItems.map { item =>
 			val iconAttribute = item.attributes.getOrElse(Attribute.Icon, 0L)
 			val qlAttribute = item.attributes.getOrElse(Attribute.Level, 0L)
 			val itemTypeAttribute = item.attributes.getOrElse(Attribute.ItemClass, 0L)
 				
-			new Entry(item.id.toInt, qlAttribute.toInt, item.name, iconAttribute.toInt, RDBFunctions.getItemType(itemTypeAttribute))
+			new Entry(item.id.toInt, qlAttribute.toInt, item.name, iconAttribute.toInt, ItemType.getType(itemTypeAttribute).get)
 		}
 		
 		val outputdb = new DB(h2Ds)
@@ -55,16 +57,23 @@ class IdMatcher {
 			val itemsDbFilename = getNewFileName(aoPath, "aodb{version}.sql")
 			outputSqlFile(outputdb, itemsDbFilename)
 
+			val itemsMap: Map[Long, RDBItem] = rdbItems.map(x => (x.id, x)).toMap
+			val nanosMap: Map[Long, RDBItem] = rdbNanos.map(x => (x.id, x)).toMap
+
 			val weaponAttributesFilename = getNewFileName(aoPath, "weapon_attributes{version}.sql")
-			outputWeaponAttributes(rdbItems, outputdb, weaponAttributesFilename)
+			outputWeaponAttributes(itemsMap, outputdb, weaponAttributesFilename)
+
+			val buffsFilename = getNewFileName(aoPath, "item_buffs{version}.sql")
+			val itemTypesFilename = getNewFileName(aoPath, "item_types{version}.sql")
+			outputBuffInfo(itemsMap, nanosMap, outputdb, buffsFilename, itemTypesFilename)
 		}
 		log.info("Elapsed time: %ds".format(elapsed / 1000))
 	}
 
 	@tailrec
-	def getNewFileName(aoPath: String, filename: String, buildNumber: Int = 0): String = {
+	private def getNewFileName(aoPath: String, filename: String, buildNumber: Int = 0): String = {
 		val version = getVersion(aoPath, buildNumber)
-		val newFilename = filename.replaceAll("{version}", version)
+		val newFilename = filename.replaceAll("\\{version\\}", version)
 		if (Files.exists(Paths.get(newFilename))) {
 			getNewFileName(aoPath, filename, buildNumber + 1)
 		} else {
@@ -109,7 +118,7 @@ class IdMatcher {
 					{ rs => new Entry(rs) }
 				)
 
-				if (entries.size > 0) {
+				if (entries.nonEmpty) {
 					pairEntries(db, entries)
 				}
 			}
@@ -235,7 +244,7 @@ class IdMatcher {
 	}
 
 	def pairEntries(db: DB, entries: Seq[Entry]) {
-		if (entries.size == 0) {
+		if (entries.isEmpty) {
 			return
 		}
 
@@ -335,19 +344,18 @@ class IdMatcher {
 			items foreach { item =>
 				writer.println("INSERT INTO aodb VALUES (%d, %d, %d, %d, '%s', %d);".format(item.lowId, item.highId, item.lowQl, item.highQl, item.name.replace("'", "''"), item.icon))
 			}
+			writer.println("CREATE INDEX idx_highid ON aodb(highid);")
 		}
 	}
 	
-	def outputWeaponAttributes(rdbItems: Seq[RDBItem], db: DB, file: String) {
+	def outputWeaponAttributes(rdbMap: Map[Long, RDBItem], db: DB, file: String) {
 		log.debug("writing weapon attributes to file: '%s'".format(file))
-		
-		val itemMap = rdbItems.map(x => (x.id, x)).toMap
-		
+
 		val weapons = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) }).foldLeft(List[RDBItem]()) { (list, item) =>
 			if (item.highId != item.lowId) {
-				itemMap(item.lowId) :: itemMap(item.highId) :: list
+				rdbMap(item.lowId) :: rdbMap(item.highId) :: list
 			} else {
-				itemMap(item.highId) :: list
+				rdbMap(item.highId) :: list
 			}
 		} filter { x => 
 			x.attributes.get(Attribute.ItemDelay).isDefined &&
@@ -372,6 +380,113 @@ class IdMatcher {
 								(if (getFlag(CanFlag.AimedShot, flags)) "1" else "0")))
 			}
 		}
+	}
+
+	def outputBuffInfo(itemsMap: Map[Long, RDBItem], nanosMap: Map[Long, RDBItem], db: DB, buffsFile: String, itemTypeFile: String): Unit = {
+		log.debug("writing buff attributes to file: '%s'".format(buffsFile))
+		log.debug("writing itemTypes to file: '%s'".format(itemTypeFile))
+
+		val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) })
+
+		val weaponGroups = Seq(
+			(Seq(WeaponSlot.UTIL1, WeaponSlot.UTIL2, WeaponSlot.UTIL3), "Util"),
+			(Seq(WeaponSlot.HUD1, WeaponSlot.HUD2, WeaponSlot.HUD3), "Hud"),
+			(Seq(WeaponSlot.BELT, WeaponSlot.DECK1, WeaponSlot.DECK2, WeaponSlot.DECK3, WeaponSlot.DECK4, WeaponSlot.DECK5, WeaponSlot.DECK6), "Deck"),
+			(Seq(WeaponSlot.LEFT_HAND, WeaponSlot.RIGHT_HAND), "Weapon"))
+
+		val armorGroups = Seq(
+			(Seq(ArmorSlot.NECK), "Neck"),
+			(Seq(ArmorSlot.HEAD), "Head"),
+			(Seq(ArmorSlot.BACK), "Back"),
+			(Seq(ArmorSlot.CHEST), "Chest"),
+			(Seq(ArmorSlot.HANDS), "Hands"),
+			(Seq(ArmorSlot.LEGS), "Legs"),
+			(Seq(ArmorSlot.FEET), "Feet"),
+			(Seq(ArmorSlot.RIGHT_SHOULDER, ArmorSlot.LEFT_SHOULDER), "Shoulders"),
+			(Seq(ArmorSlot.RIGHT_ARM, ArmorSlot.LEFT_ARM), "Arms"),
+			(Seq(ArmorSlot.RIGHT_WRIST, ArmorSlot.LEFT_WRIST), "Wrists"),
+			(Seq(ArmorSlot.RIGHT_FINGER, ArmorSlot.LEFT_FINGER), "Fingers"))
+
+		using(new PrintWriter(itemTypeFile)) { itemTypesWriter =>
+			itemTypesWriter.println("DROP TABLE IF EXISTS item_types;")
+			itemTypesWriter.println("CREATE TABLE item_types (item_id INT, item_type VARCHAR(50));")
+
+			using(new PrintWriter(buffsFile)) { buffsWriter =>
+				buffsWriter.println("DROP TABLE IF EXISTS item_buffs;")
+				buffsWriter.println("CREATE TABLE item_buffs (item_id INT, attribute_id INT, amount INT);")
+
+				items.foreach { item =>
+					val rdbItem = itemsMap(item.highId)
+					val itemType = getItemType(rdbItem)
+					if (itemType != "Spirit" && itemType != "Implant" && itemType != "Misc" && itemType != "Unknown") {
+						if (writeBuffs(rdbItem, rdbItem.id, EventType.OnWear, buffsWriter)) {
+							val subItemTypes = itemType match {
+								case "Armor" =>
+									getSlots(armorGroups, rdbItem)
+								case "Weapon" =>
+									getSlots(weaponGroups, rdbItem)
+							}
+							subItemTypes.foreach(subItemType => itemTypesWriter.println(s"INSERT INTO item_types (item_id, item_type) VALUES (${rdbItem.id}, '$subItemType');"))
+						}
+					}
+
+					val nanoBuffs: Seq[RDBItem] = rdbItem.events
+						.filter(_.eventType == EventType.OnUse)
+						.flatMap(_.functions.filter(_.functionNum == 53019L))
+						.map(_.params(0).asInstanceOf[Int])
+						.flatMap(nanoId => nanosMap.get(nanoId))
+
+					nanoBuffs.foreach { nanoItem =>
+						if (writeBuffs(nanoItem, rdbItem.id, EventType.OnUse, buffsWriter)) {
+							log.debug(s"Item ${rdbItem.name} uploads nano ${nanoItem.name}")
+							itemTypesWriter.println(s"INSERT INTO item_types (item_id, item_type) VALUES (${rdbItem.id}, 'Nano');")
+						}
+					}
+				}
+				buffsWriter.println("CREATE INDEX idx_item_id ON item_buffs(item_id);")
+			}
+			itemTypesWriter.println("CREATE INDEX idx_item_type ON item_types(item_type);")
+		}
+	}
+
+	def writeBuffs(rdbItem: RDBItem, itemId: Long, eventType: Long, writer: PrintWriter): Boolean = {
+		val buffs = getBuffs(rdbItem, eventType)
+		buffs.foreach(buff => writer.println(s"INSERT INTO item_buffs (item_id, attribute_id, amount) VALUES ($itemId, ${buff._1}, ${buff._2});"))
+		buffs.nonEmpty
+	}
+
+	def getItemType(item: RDBItem): String = {
+		item.attributes.find(_._1 == Attribute.ItemClass).map(x => ItemType.getType(x._2).getOrElse("Armor")).getOrElse("Unknown")
+	}
+
+	def getSlots(groups: Seq[(Seq[Int], String)], item: RDBItem): Seq[String] = {
+		val result = item.attributes.find(_._1 == Attribute.Placement).map { case (_, placement) =>
+			groups.flatMap{ case (bitMasks, label) =>
+				if (testBitMasks(bitMasks, placement.toInt)) {
+					Some(label)
+				} else {
+					None
+				}
+			}
+		}.getOrElse(Seq())
+
+		if (result.isEmpty) {
+			Seq("Unknown")
+		} else {
+			result
+		}
+	}
+
+	def testBitMasks(bitMasks: Seq[Int], test: Int): Boolean = {
+		bitMasks.exists(x => (x & test) == x)
+	}
+
+	def getBuffs(item: RDBItem, eventType: Long): Seq[(Int, Int)] = {
+		item.events
+			.filter(_.eventType == eventType)
+			.flatMap(_.functions.filter(_.functionNum == 53045L))
+			.map(_.params)
+	  	.map( params => (params(0).asInstanceOf[Int], params(1).asInstanceOf[Int]))
 	}
 
 	def readEntriesFromFile(file: String): List[String] = {
