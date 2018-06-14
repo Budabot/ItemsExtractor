@@ -6,7 +6,6 @@ import java.sql.ResultSet
 import scala.io.Source
 import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
-import com.jkbff.ao.itemsextractor.rdb.RDBFunctions
 import com.jkbff.ao.itemsextractor.rdb.RDBItem
 import com.jkbff.ao.itemsextractor.rdb.constants._
 import com.jkbff.common.DB
