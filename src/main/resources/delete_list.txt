@@ -20,7 +20,6 @@ UPPER(name) LIKE UPPER('% (%replica)')
 UPPER(name) LIKE UPPER('Replica Armor Set:%')
 UPPER(name) LIKE UPPER('Nano Can: %')
 UPPER(name) LIKE UPPER('Dust Brigade Assistance Module') AND ql > 250
-UPPER(name) LIKE UPPER('%Symbiant, % Unit Aban') AND aoid < 220300 AND aoid > 219139
 UPPER(name) LIKE UPPER('Kyr''Ozch %') AND aoid >= 247245 AND aoid <= 247672
 UPPER(name) LIKE UPPER('compiled algorithm (%')
 UPPER(name) LIKE UPPER('instruction disc (%')
