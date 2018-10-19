@@ -51,6 +51,21 @@
 			<artifactId>ini4j</artifactId>
 			<version>0.5.4</version>
 		</dependency>
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-core_2.11</artifactId>
+			<version>0.9.3</version>
+		</dependency>
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-generic_2.11</artifactId>
+			<version>0.9.3</version>
+		</dependency>
+		<dependency>
+			<groupId>io.circe</groupId>
+			<artifactId>circe-parser_2.11</artifactId>
+			<version>0.9.3</version>
+		</dependency>
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
