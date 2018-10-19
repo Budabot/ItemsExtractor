@@ -432,7 +432,7 @@ class IdMatcher {
 					val nanoBuffs: Seq[RDBItem] = rdbItem.events
 						.filter(_.eventType == EventType.OnUse)
 						.flatMap(_.functions.filter(_.functionNum == 53019L))
-						.map(_.params(0).asInstanceOf[Int])
+						.map(_.params(0).toInt)
 						.flatMap(nanoId => nanosMap.get(nanoId))
 
 					nanoBuffs.foreach { nanoItem =>
@@ -485,7 +485,7 @@ class IdMatcher {
 			.filter(_.eventType == eventType)
 			.flatMap(_.functions.filter(_.functionNum == 53045L))
 			.map(_.params)
-	  	.map( params => (params(0).asInstanceOf[Int], params(1).asInstanceOf[Int]))
+	  	.map( params => (params(0).toInt, params(1).toInt))
 	}
 
 	def readEntriesFromFile(file: String): List[String] = {
