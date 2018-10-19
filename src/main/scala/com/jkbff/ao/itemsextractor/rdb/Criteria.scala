@@ -1,5 +1,5 @@
 package com.jkbff.ao.itemsextractor.rdb
 
-class Criteria(val statNum: Long, val value: Long, val opNum: Long) {
-	override def toString() = (statNum, value, opNum).toString()
+case class Criteria(statNum: Long, value: Long, opNum: Long) {
+	override def toString(): String = (statNum, value, opNum).toString()
 }

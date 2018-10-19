@@ -1,5 +1,5 @@
 package com.jkbff.ao.itemsextractor.rdb
 
-class AttackDefense(keyType: Long, skill: Long, value: Long) {
-	override def toString() = (keyType, skill, value).toString
+case class AttackDefense(keyType: Long, skill: Long, value: Long) {
+	override def toString(): String = (keyType, skill, value).toString
 }

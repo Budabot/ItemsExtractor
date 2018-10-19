@@ -1,12 +1,12 @@
 package com.jkbff.ao.itemsextractor.rdb
 
-class RDBItem(val id: Long,
-			  val name: String,
-			  val description: String,
-			  val attributes: Map[Long, Long],
-			  val attackDefense: Seq[AttackDefense],
-			  val events: Seq[Event],
-			  val criteria: Seq[Criteria]) {
+case class RDBItem(id: Long,
+									 name: String,
+									 description: String,
+									 attributes: Map[Long, Long],
+									 attackDefense: Seq[AttackDefense],
+									 events: Seq[Event],
+									 criteria: Seq[Criteria]) {
 
 	override def toString(): String = toString("")
 

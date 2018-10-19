@@ -29,8 +29,8 @@ class RDBExtractor {
 		val description = readString(file, descriptionLength)
 
 		var events = Seq[Event]()
-		var attackDefenseList: Seq[AttackDefense] = null
-		var criteriaList: Seq[Criteria] = null
+		var attackDefenseList: Seq[AttackDefense] = Seq()
+		var criteriaList: Seq[Criteria] = Seq()
 
 		var oldSetType = -1L
 		val printValues = false
@@ -104,7 +104,7 @@ class RDBExtractor {
 				}
 			}
 		}
-		new RDBItem(record.resourceId, name, description, attributes, attackDefenseList, events.reverse, criteriaList)
+		RDBItem(record.resourceId, name, description, attributes, attackDefenseList, events.reverse, criteriaList)
 	}
 
 	def consumeRemainingBytes(file: RandomAccessFile, endOffset: Long, printValues: Boolean): Unit = {
@@ -123,7 +123,7 @@ class RDBExtractor {
 		file.skipBytes(8)
 		val criteriaCount = int3F1(readLittleEndianInt(file))
 
-		(1L to criteriaCount).map(_ => new Criteria(readLittleEndianInt(file), readLittleEndianInt(file), readLittleEndianInt(file)))
+		(1L to criteriaCount).map(_ => Criteria(readLittleEndianInt(file), readLittleEndianInt(file), readLittleEndianInt(file)))
 	}
 	
 	def parseAttribute(file: RandomAccessFile): (Long, Long) = {
@@ -170,7 +170,7 @@ class RDBExtractor {
 				paramType match {
 					case "n" =>
 						(1 to num).map { _ =>
-							readLittleEndianSignedInt(file)
+							readLittleEndianSignedInt(file).toString
 						}
 					case "h" =>
 						(1 to num).map { _ =>
@@ -183,7 +183,8 @@ class RDBExtractor {
 							str.trim
 						}
 					case "x" =>
-						Seq(file.skipBytes(num))
+						file.skipBytes(num)
+						Seq()
 				}
 			}
 			Function(functionNum, hits, delay, target, requirements, functionParams)
@@ -205,7 +206,7 @@ class RDBExtractor {
 			(1L to setCount).map { _ =>
 				val statNumber = readLittleEndianInt(file)
 				val statValue = readLittleEndianInt(file)
-				new AttackDefense(keyType, statNumber, statValue)
+				AttackDefense(keyType, statNumber, statValue)
 			}
 		}
 	}

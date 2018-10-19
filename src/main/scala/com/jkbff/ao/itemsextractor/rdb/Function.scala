@@ -5,7 +5,7 @@ case class Function(functionNum: Long,
 										iterationDelay: Long,
 										target: Long,
 										requirements: Seq[FunctionRequirement],
-										params: Seq[Any]) {
+										params: Seq[String]) {
 
 	override def toString() = toString("")
 
