@@ -435,11 +435,17 @@ class IdMatcher {
 						.map(_.params(0).toInt)
 						.flatMap(nanoId => nanosMap.get(nanoId))
 
-					nanoBuffs.foreach { nanoItem =>
+					val hasBuffs = nanoBuffs.map { nanoItem =>
 						if (writeBuffs(nanoItem, rdbItem.id, EventType.OnUse, buffsWriter)) {
 							log.debug(s"Item ${rdbItem.name} uploads nano ${nanoItem.name}")
-							itemTypesWriter.println(s"INSERT INTO item_types (item_id, item_type) VALUES (${rdbItem.id}, 'Nano');")
+							true
+						} else {
+							false
 						}
+					}.exists(p => p)
+
+					if (hasBuffs) {
+						itemTypesWriter.println(s"INSERT INTO item_types (item_id, item_type) VALUES (${rdbItem.id}, 'Nanoprogram');")
 					}
 				}
 				buffsWriter.println("CREATE INDEX idx_item_id ON item_buffs(item_id);")
