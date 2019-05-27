@@ -22,7 +22,6 @@ UPPER(name) LIKE UPPER('Nano Can: %')
 UPPER(name) LIKE UPPER('Dust Brigade Assistance Module') AND ql > 250
 UPPER(name) LIKE UPPER('Kyr''Ozch %') AND aoid >= 247245 AND aoid <= 247672
 UPPER(name) LIKE UPPER('compiled algorithm (%')
-UPPER(name) LIKE UPPER('instruction disc (%')
 UPPER(name) LIKE UPPER('programmed photon particle emitter (%')
 UPPER(name) LIKE UPPER('unfinished %')
 UPPER(name) LIKE UPPER('balanced bracelet blueprints')
@@ -57,7 +56,6 @@ UPPER(name) LIKE UPPER('Cracked and Miskept Shadow Crystal %')
 UPPER(name) LIKE UPPER('Hacked Blister Pack with %')
 UPPER(name) LIKE UPPER('Hacked Charged Nano Critter %')
 UPPER(name) LIKE UPPER('Hacked Corroded Crystal %')
-name = 'Izgimmer-modified Cyberdeck'
 name = 'Bio Rejuvenation'
 name = 'Called Shot'
 name = 'Bracelet of Arul Saba'

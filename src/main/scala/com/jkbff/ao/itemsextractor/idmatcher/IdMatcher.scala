@@ -143,7 +143,7 @@ class IdMatcher {
 		//db.startTransaction()
 		deleteList foreach { line =>
 			log.debug("Deleting where " + line)
-			val matches = db.query("SELECT aoid, name FROM entries WHERE " + line, { rs => (rs.getInt("aoid"), rs.getString("name")) })
+			val matches = db.query("SELECT aoid, name, ql FROM entries WHERE " + line, { rs => (rs.getInt("aoid"), rs.getString("name"), rs.getInt("ql")) })
 			matches foreach (x => log.debug("Deleting item " + x))
 			db.update("DELETE FROM entries WHERE " + line)
 		}
