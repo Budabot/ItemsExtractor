@@ -19,8 +19,6 @@ UPPER(name) LIKE UPPER('% CLONE')
 UPPER(name) LIKE UPPER('% (%replica)')
 UPPER(name) LIKE UPPER('Replica Armor Set:%')
 UPPER(name) LIKE UPPER('Nano Can: %')
-UPPER(name) LIKE UPPER('Dust Brigade Assistance Module') AND ql > 250
-UPPER(name) LIKE UPPER('Kyr''Ozch %') AND aoid >= 247245 AND aoid <= 247672
 UPPER(name) LIKE UPPER('compiled algorithm (%')
 UPPER(name) LIKE UPPER('programmed photon particle emitter (%')
 UPPER(name) LIKE UPPER('unfinished %')
@@ -45,7 +43,6 @@ UPPER(name) LIKE UPPER('fashion kit - %')
 UPPER(name) LIKE UPPER('%Construction Kit%')
 UPPER(name) LIKE UPPER('NPC%')
 UPPER(name) LIKE UPPER('Blood of%')
-UPPER(name) LIKE UPPER('AI Nanodamagemultiplier%')
 UPPER(name) LIKE UPPER('Anim Action%')
 UPPER(name) LIKE UPPER('Badly Corroded Crystal %')
 UPPER(name) LIKE UPPER('Badly Eroded Crystal %')
@@ -79,10 +76,6 @@ UPPER(name) LIKE UPPER('%use%item')
 aoid = 233827
 aoid = 215054
 aoid = 230444
-aoid = 251261
-aoid = 224085
 aoid = 267591
 aoid = 267592
 aoid = 267594
-aoid = 289298
-aoid = 289299
