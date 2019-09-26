@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jkbff.ao</groupId>
 	<artifactId>ItemsExtractor</artifactId>
-	<version>1.5</version>
+	<version>1.6</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
