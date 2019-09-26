@@ -385,7 +385,7 @@ class IdMatcher {
 		log.debug("writing buff attributes to file: '%s'".format(buffsFile))
 		log.debug("writing itemTypes to file: '%s'".format(itemTypeFile))
 
-		val items = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) })
+		val itemIds = db.query("SELECT aoid FROM entries ORDER BY name, ql, aoid", { rs => rs.getInt("aoid")})
 
 		val weaponGroups = Seq(
 			(Seq(WeaponSlot.UTIL1, WeaponSlot.UTIL2, WeaponSlot.UTIL3), "Util"),
@@ -414,8 +414,8 @@ class IdMatcher {
 				buffsWriter.println("DROP TABLE IF EXISTS item_buffs;")
 				buffsWriter.println("CREATE TABLE item_buffs (item_id INT, attribute_id INT, amount INT);")
 
-				items.foreach { item =>
-					val rdbItem = itemsMap(item.highId)
+				itemIds.foreach { itemId =>
+					val rdbItem = itemsMap(itemId)
 					val itemType = getItemType(rdbItem)
 					if (itemType != "Spirit" && itemType != "Implant" && itemType != "Misc" && itemType != "Unknown") {
 						if (writeBuffs(rdbItem, rdbItem.id, EventType.OnWear, buffsWriter)) {
