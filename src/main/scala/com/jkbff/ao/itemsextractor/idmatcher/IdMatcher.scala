@@ -385,7 +385,7 @@ class IdMatcher {
 		log.debug("writing buff attributes to file: '%s'".format(buffsFile))
 		log.debug("writing itemTypes to file: '%s'".format(itemTypeFile))
 
-		val itemIds = db.query("SELECT aoid FROM entries ORDER BY name, ql, aoid", { rs => rs.getInt("aoid")})
+		val itemIds = db.query("SELECT name, lowql AS ql, lowid AS itemid FROM aodb UNION SELECT name, highql AS ql, highid AS itemid FROM aodb ORDER BY name, ql, itemid", { rs => rs.getInt("itemid") })
 
 		val weaponGroups = Seq(
 			(Seq(WeaponSlot.UTIL1, WeaponSlot.UTIL2, WeaponSlot.UTIL3), "Util"),
