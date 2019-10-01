@@ -16,6 +16,8 @@ jobs:
       - image: cibuilds/github:0.10
     working_directory: ~/app
     steps:
+      - attach_workspace:
+        at: ~/app
       - run:
           name: "Publish Release on GitHub"
           command: |
