@@ -4,28 +4,27 @@ jobs:
   build:
     docker:
       - image: maven:3.3-jdk-8
-    working_directory: ~/app
     steps:
       - checkout
       - run:
           name: "Package a build"
           command: mvn -e clean package
       - persist_to_workspace:
-          root: ~/app/target/release/
+          root: ./
           paths:
-            - "*"
+            - target/release/
 
   publish-github-release:
     docker:
-      - image: cibuilds/github:0.10
+      - image: cibuilds/github:0.13.0
     steps:
       - attach_workspace:
-          at: ./release
+          at: ./workspace
       - run:
           name: "Publish Release on GitHub"
           command: |
             VERSION=$CIRCLE_TAG
-            PATH="./release/ItemsExtractor-${VERSION}"
+            PATH="./workspace/target/release/ItemsExtractor-${VERSION}"
             echo $PATH
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} -n "Items Extractor ${VERSION}" --pre-release ${VERSION} ${PATH}
 
