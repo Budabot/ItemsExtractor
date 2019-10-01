@@ -1,0 +1,44 @@
+version: 2.0
+
+jobs:
+  build:
+    docker:
+      - image: maven:3.3-jdk-8
+    working_directory: ~/app
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: "Package a build"
+          command: mvn -e clean package
+
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.10
+    working_directory: ~/app
+    steps:
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            VERSION=$CIRCLE_TAG
+            PATH="./target/release/ItemsExtractor-${VERSION}"
+            echo $PATH
+            echo $VERSION
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} -n "Items Extractor ${VERSION}" --pre-release ${VERSION} ${PATH}
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags: /.*/
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags: /.*/
