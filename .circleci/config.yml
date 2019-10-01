@@ -10,21 +10,23 @@ jobs:
       - run:
           name: "Package a build"
           command: mvn -e clean package
+      - persist_to_workspace:
+          root: ~/app/target/release/
+          paths:
+            - *
 
   publish-github-release:
     docker:
       - image: cibuilds/github:0.10
-    working_directory: ~/app
     steps:
       - attach_workspace:
-          at: ~/app
+          at: ./release
       - run:
           name: "Publish Release on GitHub"
           command: |
             VERSION=$CIRCLE_TAG
-            PATH="./target/release/ItemsExtractor-${VERSION}"
+            PATH="./release/ItemsExtractor-${VERSION}"
             echo $PATH
-            echo $VERSION
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} -n "Items Extractor ${VERSION}" --pre-release ${VERSION} ${PATH}
 
 workflows:
