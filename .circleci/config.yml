@@ -24,9 +24,9 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             VERSION=$CIRCLE_TAG
-            PATH="./workspace/target/release/ItemsExtractor-${VERSION}"
-            echo $PATH
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} -n "Items Extractor ${VERSION}" --pre-release ${VERSION} ${PATH}
+            ZIP_FILE=ItemsExtractor-${VERSION}.zip
+            cd workspace/target/release/ && zip -r ${ZIP_FILE} ItemsExtractor-${VERSION}/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "Items Extractor ${VERSION}" -recreate -prerelease ${VERSION} ${ZIP_FILE}
 
 workflows:
   version: 2
