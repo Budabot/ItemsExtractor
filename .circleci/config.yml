@@ -13,7 +13,7 @@ jobs:
       - persist_to_workspace:
           root: ~/app/target/release/
           paths:
-            - *
+            - "*"
 
   publish-github-release:
     docker:
