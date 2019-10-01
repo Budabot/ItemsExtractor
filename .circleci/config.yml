@@ -17,7 +17,7 @@ jobs:
     working_directory: ~/app
     steps:
       - attach_workspace:
-        at: ~/app
+          at: ~/app
       - run:
           name: "Publish Release on GitHub"
           command: |
