@@ -4,13 +4,14 @@ import java.io.PrintWriter
 import java.sql.ResultSet
 
 import scala.io.Source
-import org.apache.commons.dbcp.BasicDataSource
 import org.apache.log4j.Logger
 import com.jkbff.ao.itemsextractor.rdb.RDBItem
 import com.jkbff.ao.itemsextractor.rdb.constants._
-import com.jkbff.common.DB
+import com.jkbff.common.{DB, Helper}
 import com.jkbff.common.Helper._
 import java.nio.file.{Files, Paths}
+
+import javax.sql.DataSource
 
 import scala.annotation.tailrec
 
@@ -18,13 +19,7 @@ class IdMatcher {
 
 	val log: Logger = Logger.getLogger(this.getClass)
 
-	lazy val h2Ds: BasicDataSource = init(new BasicDataSource()) { ds =>
-		ds.setDriverClassName("org.h2.Driver")
-		//ds.setUrl("jdbc:h2:mem:db1;IGNORECASE=true")
-		ds.setUrl("jdbc:h2:mem:db1")
-		ds.setUsername("")
-		ds.setPassword("")
-	}
+	lazy val h2Ds: DataSource = Helper.getDataSource("org.h2.Driver", "", "", "jdbc:h2:mem:db1")
 
 	def writeSqlFile(rdbItems: Seq[RDBItem], rdbNanos: Seq[RDBItem], aoPath: String) {
 		val entries = rdbItems.map { item =>

@@ -7,7 +7,6 @@ jobs:
     working_directory: ~/app
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: "Package a build"
           command: mvn -e clean package
