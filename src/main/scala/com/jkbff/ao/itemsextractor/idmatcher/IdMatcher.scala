@@ -345,20 +345,16 @@ class IdMatcher {
 	def outputWeaponAttributes(rdbMap: Map[Long, RDBItem], db: DB, file: String) {
 		log.debug("writing weapon attributes to file: '%s'".format(file))
 
-		val weapons = db.query("SELECT * FROM aodb ORDER BY name, lowql, lowid", { rs => new Item(rs) }).foldLeft(List[RDBItem]()) { (list, item) =>
-			if (item.highId != item.lowId) {
-				rdbMap(item.lowId) :: rdbMap(item.highId) :: list
-			} else {
-				rdbMap(item.highId) :: list
-			}
-		} filter { x => 
+		val weapons = db.query("SELECT lowid AS id FROM aodb UNION SELECT highid AS id FROM aodb ORDER BY id", { rs => rs.getLong("id") }).map{ id =>
+			rdbMap(id)
+		} filter { x =>
 			x.attributes.get(Attribute.ItemDelay).isDefined &&
 			x.attributes.get(Attribute.RechargeDelay).isDefined
 		}
 		
 		using(new PrintWriter(file)) { writer =>
 			writer.println("DROP TABLE IF EXISTS weapon_attributes;")
-			writer.println("CREATE TABLE weapon_attributes (id INT, attack_time INT, recharge_time INT, full_auto INT, burst INT, fling_shot TINYINT NOT NULL, fast_attack TINYINT NOT NULL, aimed_shot TINYINT NOT NULL);")
+			writer.println("CREATE TABLE weapon_attributes (id INT PRIMARY KEY, attack_time INT NOT NULL, recharge_time INT NOT NULL, full_auto INT, burst INT, fling_shot TINYINT NOT NULL, fast_attack TINYINT NOT NULL, aimed_shot TINYINT NOT NULL);")
 			
 			weapons foreach { item =>
 				val flags = item.attributes(Attribute.Can)
