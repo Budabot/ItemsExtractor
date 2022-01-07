@@ -2,7 +2,7 @@ package com.jkbff.ao.itemsextractor
 
 import java.io.{File, RandomAccessFile}
 
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.ParameterException
 import com.jkbff.ao.itemsextractor.rdb.MultiRandomAccessFile
@@ -10,7 +10,7 @@ import com.jkbff.common.EnrichedString.stringToEnrichedString
 import com.jkbff.common.Helper.using
 
 object Program extends App {
-	val log = Logger.getLogger(this.getClass())
+	val log = LoggerFactory.getLogger(this.getClass())
 
 	System.setProperty("line.separator", "\n")
 	

@@ -9,12 +9,12 @@ import com.jkbff.ao.itemsextractor.rdb.{MultiRandomAccessFile, RDBExtractor, RDB
 import com.jkbff.common.DB
 import com.jkbff.common.Helper._
 import org.apache.commons.dbcp.BasicDataSource
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 
 import scala.io.Source
 
 class Runner (aoPath: String) {
-	private val log = Logger.getLogger(this.getClass())
+	private val log = LoggerFactory.getLogger(this.getClass())
 	
 	lazy val indexFile = new RandomAccessFile(aoPath + "cd_image/data/db/ResourceDatabase.idx", "r")
 

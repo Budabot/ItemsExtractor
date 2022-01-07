@@ -5,10 +5,10 @@ import java.sql.ResultSet
 import com.jkbff.common.Helper.using
 import javax.sql.DataSource
 import java.util.regex.Matcher
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 
 class DB(ds: DataSource) {
-  private val log = Logger.getLogger(getClass())
+  private val log = LoggerFactory.getLogger(getClass())
   val connection = ds.getConnection()
 
   def query[T](sql: String, rowMapper: ResultSet => T): List[T] = {

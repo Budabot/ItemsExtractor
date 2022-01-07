@@ -6,11 +6,11 @@ import com.jkbff.ao.itemsextractor.idmatcher.IdMatcher
 import com.jkbff.ao.itemsextractor.rdb.constants.IndexRecordType
 import com.jkbff.ao.itemsextractor.rdb.index.{IndexRecord, RDBIndexReader}
 import com.jkbff.ao.itemsextractor.rdb.{MultiRandomAccessFile, RDBExtractor, RDBItem}
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 
 class BudabotSqlDumpModule {
 
-  private val log = Logger.getLogger(this.getClass())
+  private val log = LoggerFactory.getLogger(this.getClass())
 
   def execute(db: MultiRandomAccessFile, indexFile: RandomAccessFile, aoPath: String): Unit = {
     val itemEntries = getEntries(db, indexFile, IndexRecordType.AODB_ITEM_TYPE)

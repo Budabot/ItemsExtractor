@@ -4,7 +4,7 @@ import java.io.PrintWriter
 import java.sql.ResultSet
 
 import scala.io.Source
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import com.jkbff.ao.itemsextractor.rdb.RDBItem
 import com.jkbff.ao.itemsextractor.rdb.constants._
 import com.jkbff.common.{DB, Helper}
@@ -17,7 +17,7 @@ import scala.annotation.tailrec
 
 class IdMatcher {
 
-	val log: Logger = Logger.getLogger(this.getClass)
+	val log = LoggerFactory.getLogger(this.getClass)
 
 	lazy val h2Ds: DataSource = Helper.getDataSource("org.h2.Driver", "", "", "jdbc:h2:mem:db1")
 
