@@ -35,7 +35,7 @@ class IdMatcher {
 		val elapsed = stopwatch {
 			outputdb.update("DROP TABLE IF EXISTS entries")
 			outputdb.update("DROP TABLE IF EXISTS aodb")
-			outputdb.update("CREATE TABLE entries (aoid INT, ql INT, name TEXT, icon INT, itemtype TEXT, hash TEXT)")
+			outputdb.update("CREATE TABLE entries (aoid INT, ql INT, name VARCHAR(255), icon INT, itemtype TEXT, hash TEXT)")
 			outputdb.update("CREATE TABLE aodb (lowid INT, highid INT, lowql INT, highql INT, name VARCHAR(150), icon INT)")
 
 			writeEntriesToDb(outputdb, entries)
@@ -376,7 +376,9 @@ class IdMatcher {
 		log.debug("writing buff attributes to file: '%s'".format(buffsFile))
 		log.debug("writing itemTypes to file: '%s'".format(itemTypeFile))
 
-		val itemIds = db.query("SELECT lowid AS itemid FROM aodb UNION SELECT highid AS itemid FROM aodb ORDER BY itemid", { rs => rs.getInt("itemid") })
+		// ignore Blackmane's Stat Buffer 206704/206704'
+		val itemIds = db.query("SELECT lowid AS itemid FROM aodb WHERE lowid != 206704 " +
+			"UNION SELECT highid AS itemid FROM aodb WHERE highid != 206704 ORDER BY itemid", { rs => rs.getInt("itemid") })
 
 		val weaponGroups = Seq(
 			(Seq(WeaponSlot.UTIL1, WeaponSlot.UTIL2, WeaponSlot.UTIL3), "Util"),
