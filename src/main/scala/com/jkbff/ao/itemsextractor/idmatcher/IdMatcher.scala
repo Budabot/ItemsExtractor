@@ -2,26 +2,24 @@ package com.jkbff.ao.itemsextractor.idmatcher
 
 import java.io.PrintWriter
 import java.sql.ResultSet
-
 import scala.io.Source
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import com.jkbff.ao.itemsextractor.rdb.RDBItem
 import com.jkbff.ao.itemsextractor.rdb.constants._
 import com.jkbff.common.{DB, Helper}
 import com.jkbff.common.Helper._
+
 import java.nio.file.{Files, Paths}
-
 import javax.sql.DataSource
-
 import scala.annotation.tailrec
 
 class IdMatcher {
 
-	val log = LoggerFactory.getLogger(this.getClass)
+	val log: Logger = LoggerFactory.getLogger(this.getClass)
 
 	lazy val h2Ds: DataSource = Helper.getDataSource("org.h2.Driver", "", "", "jdbc:h2:mem:db1")
 
-	def writeSqlFile(rdbItems: Seq[RDBItem], rdbNanos: Seq[RDBItem], aoPath: String) {
+	def writeSqlFile(rdbItems: Seq[RDBItem], rdbNanos: Seq[RDBItem], aoPath: String): Unit = {
 		val entries = rdbItems.map { item =>
 			val iconAttribute = item.attributes.getOrElse(Attribute.Icon, 0L)
 			val qlAttribute = item.attributes.getOrElse(Attribute.Level, 0L)
@@ -75,7 +73,7 @@ class IdMatcher {
 		}
 	}
 
-	def processNameSeparations(db: DB, nameSeparationList: Seq[String]) {
+	def processNameSeparations(db: DB, nameSeparationList: Seq[String]): Unit = {
 		//db.startTransaction()
 		nameSeparationList foreach { line =>
 			val parms = line.split(',')
@@ -134,7 +132,7 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def processDeleteList(db: DB, deleteList: List[String]) {
+	def processDeleteList(db: DB, deleteList: List[String]): Unit = {
 		//db.startTransaction()
 		deleteList foreach { line =>
 			log.debug("Deleting where " + line)
@@ -145,7 +143,7 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def processStaticList(db: DB, staticList: Seq[String]) {
+	def processStaticList(db: DB, staticList: Seq[String]): Unit = {
 		val list = staticList map (_.split(','))
 
 		//db.startTransaction()
@@ -188,7 +186,7 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def processRemaingingEntries(db: DB) {
+	def processRemaingingEntries(db: DB): Unit = {
 		//db.startTransaction()
 		val mapper = { rs: ResultSet =>
 			Map("name" -> rs.getString("name"), "itemtype" -> rs.getString("itemtype"))
@@ -237,7 +235,7 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def pairEntries(db: DB, entries: Seq[Entry]) {
+	def pairEntries(db: DB, entries: Seq[Entry]): Unit = {
 		if (entries.isEmpty) {
 			return
 		}
@@ -270,7 +268,7 @@ class IdMatcher {
 		addEntryItems(db, tempEntries.reverse)
 	}
 
-	def addEntryItems(db: DB, entries: Seq[Entry]) {
+	def addEntryItems(db: DB, entries: Seq[Entry]): Unit = {
 		entries.grouped(2).foreach { pair =>
 			if (pair.size == 1) {
 				// last one could be single
@@ -290,7 +288,7 @@ class IdMatcher {
 		}
 	}
 
-	def addItem(db: DB, low: Entry, high: Entry) {
+	def addItem(db: DB, low: Entry, high: Entry): Unit = {
 		if (low.ql > high.ql) {
 			log.error("Invalid item! low ql is greater than high ql: " + low + " " + high)
 		}
@@ -308,7 +306,7 @@ class IdMatcher {
 		//log.debug(sql)
 	}
 
-	def writeEntriesToDb(db: DB, entries: Seq[Entry]) {
+	def writeEntriesToDb(db: DB, entries: Seq[Entry]): Unit = {
 		//db.startTransaction()
 		log.debug("writing %d entries".format(entries.size))
 		entries foreach { entry =>
@@ -326,7 +324,7 @@ class IdMatcher {
 		//db.commitTransaction()
 	}
 
-	def outputSqlFile(db: DB, file: String) {
+	def outputSqlFile(db: DB, file: String): Unit = {
 		log.debug("writing results to file: '%s'".format(file))
 		
 		using(new PrintWriter(file)) { writer =>
@@ -342,14 +340,14 @@ class IdMatcher {
 		}
 	}
 	
-	def outputWeaponAttributes(rdbMap: Map[Long, RDBItem], db: DB, file: String) {
+	def outputWeaponAttributes(rdbMap: Map[Long, RDBItem], db: DB, file: String): Unit = {
 		log.debug("writing weapon attributes to file: '%s'".format(file))
 
 		val weapons = db.query("SELECT lowid AS id FROM aodb UNION SELECT highid AS id FROM aodb ORDER BY id", { rs => rs.getLong("id") }).map{ id =>
 			rdbMap(id)
 		} filter { x =>
-			x.attributes.get(Attribute.ItemDelay).isDefined &&
-			x.attributes.get(Attribute.RechargeDelay).isDefined
+			x.attributes.contains(Attribute.ItemDelay) &&
+			x.attributes.contains(Attribute.RechargeDelay)
 		}
 		
 		using(new PrintWriter(file)) { writer =>
@@ -365,9 +363,9 @@ class IdMatcher {
 								item.attributes(Attribute.RechargeDelay),
 								item.attributes.getOrElse(Attribute.FullAutoRecharge, "null"),
 								item.attributes.getOrElse(Attribute.BurstRecharge, "null"),
-								(if (getFlag(CanFlag.FlingShot, flags)) "1" else "0"),
-								(if (getFlag(CanFlag.FastAttack, flags)) "1" else "0"),
-								(if (getFlag(CanFlag.AimedShot, flags)) "1" else "0")))
+								if (getFlag(CanFlag.FlingShot, flags)) "1" else "0",
+								if (getFlag(CanFlag.FastAttack, flags)) "1" else "0",
+								if (getFlag(CanFlag.AimedShot, flags)) "1" else "0"))
 			}
 		}
 	}
