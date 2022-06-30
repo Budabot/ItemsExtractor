@@ -79,3 +79,4 @@ aoid = 230444
 aoid = 267591
 aoid = 267592
 aoid = 267594
+aoid = 217667 --FandS Wearable
