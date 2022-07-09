@@ -361,8 +361,8 @@ class IdMatcher {
 						format(item.id,
 								item.attributes(Attribute.ItemDelay),
 								item.attributes(Attribute.RechargeDelay),
-								item.attributes.getOrElse(Attribute.FullAutoRecharge, "null"),
-								item.attributes.getOrElse(Attribute.BurstRecharge, "null"),
+								item.attributes.getOrElse(Attribute.FullAutoRecharge, if (getFlag(CanFlag.FullAuto, flags)) "1" else "NULL"),
+								item.attributes.getOrElse(Attribute.BurstRecharge, if (getFlag(CanFlag.Burst, flags)) "1" else "NULL"),
 								if (getFlag(CanFlag.FlingShot, flags)) "1" else "0",
 								if (getFlag(CanFlag.FastAttack, flags)) "1" else "0",
 								if (getFlag(CanFlag.AimedShot, flags)) "1" else "0"))
