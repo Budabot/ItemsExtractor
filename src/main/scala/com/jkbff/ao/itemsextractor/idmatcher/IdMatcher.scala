@@ -17,7 +17,7 @@ class IdMatcher {
 
 	val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-	lazy val h2Ds: DataSource = Helper.getDataSource("org.h2.Driver", "", "", "jdbc:h2:mem:db1")
+	lazy val h2Ds: DataSource = Helper.getDataSource("org.h2.Driver", "", "", "jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1")
 
 	def writeSqlFile(rdbItems: Seq[RDBItem], rdbNanos: Seq[RDBItem], aoPath: String): Unit = {
 		val entries = rdbItems.map { item =>
@@ -493,10 +493,17 @@ class IdMatcher {
 	}
 	
 	def getVersion(aoPath: String, buildNumber: Int): String = {
-		val source = Source.fromFile(aoPath + "version.id")
-		val pieces = source.mkString.trim.replace("_EP1", "").split("\\.").map(_.toInt)
-		source.close()
-		"%02d.%02d.%02d.%02d".format(pieces(0), pieces(1), pieces(2), buildNumber)
+		val versionStr = using(Source.fromFile(aoPath + "version.id")) { source =>
+			source.mkString.trim
+		}
+		val regex = """(\d+)\.(\d+)\.(\d+)""".r
+		regex.findFirstMatchIn(versionStr) match {
+			case Some(m) =>
+				"%02d.%02d.%02d.%02d".format(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, buildNumber)
+			case None =>
+				val pieces = versionStr.replaceAll("_[^.]*", "").split("\\.").map(_.toInt)
+				"%02d.%02d.%02d.%02d".format(pieces(0), pieces(1), pieces(2), buildNumber)
+		}
 	}
 	
 	def getFlag(flagId: Long, input: Long): Boolean = {

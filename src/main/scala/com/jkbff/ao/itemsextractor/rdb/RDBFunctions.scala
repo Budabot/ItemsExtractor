@@ -5,7 +5,7 @@ import java.io.DataInput
 
 object RDBFunctions {
 	def readMiddleEndianLong(in: DataInput): Long = {
-		readLittleEndianInt(in) * (2 ^ 32) + readLittleEndianInt(in)
+		(readLittleEndianInt(in) << 32) + readLittleEndianInt(in)
 	}
 
 	def readLittleEndianInt(in: DataInput): Long = {

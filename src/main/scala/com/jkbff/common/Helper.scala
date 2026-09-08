@@ -4,15 +4,18 @@ import java.lang.reflect.Method
 import javax.sql.DataSource
 
 import org.apache.commons.dbcp.BasicDataSource
+import org.slf4j.LoggerFactory
 
 import scala.Array.canBuildFrom
 
 object Helper {
+  private val log = LoggerFactory.getLogger(this.getClass)
   def using[T <: { def close(): Any }, U](resource: T, message: String)(op: T => U): U = {
     try {
       using(resource)(op)
     } catch {
       case e: Exception =>
+        log.error(message, e)
         throw new RuntimeException(message, e)
     }
   }
@@ -45,7 +48,7 @@ object Helper {
 
   def stopwatch(label: String)(op: => Any): Unit = {
     val elapsed = stopwatch(op)
-    println(s"${label}: ${elapsed}ms")
+    log.info(s"${label}: ${elapsed}ms")
   }
 
   /**

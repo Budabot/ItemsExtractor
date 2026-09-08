@@ -88,6 +88,7 @@ class DB(ds: DataSource) {
       result
     } catch {
       case e: Exception =>
+        log.error("Transaction failed, rolling back", e)
         connection.rollback()
         throw e
     } finally {

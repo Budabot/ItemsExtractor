@@ -18,7 +18,8 @@ object Program extends App {
 	try {
 		new JCommander(commandLineArguments, args.toArray: _*)
 	} catch {
-		case _: ParameterException =>
+		case e: ParameterException =>
+			log.error("Failed to parse command line arguments", e)
 			val jcommander = new JCommander()
 			jcommander.getObjects().add(new CommandLineArguments)
 			jcommander.usage()
@@ -27,19 +28,23 @@ object Program extends App {
 	
 	try {
 		val path = commandLineArguments.aoPath.replaceAll("\"", "").replaceAll("\\\\", "/").addEndingIfNeeded("/")
+		log.info(s"Starting ItemsExtractor with AO path: $path")
+		val dbFiles = getDatabaseFiles(path)
+		log.info(s"Found ${dbFiles.size} database file(s).")
 		
-		using(new MultiRandomAccessFile(getDatabaseFiles(path))) { db =>
+		using(new MultiRandomAccessFile(dbFiles)) { db =>
 			val indexFile = new RandomAccessFile(path + "cd_image/data/db/ResourceDatabase.idx", "r")
 			//new JsonDumpModule().execute(db, indexFile, path)
 			new BudabotSqlDumpModule().execute(db, indexFile, path)
 		}
 	} catch {
-		case e: Exception => log.error("", e)
+		case e: Exception => log.error("Error running ItemsExtractor", e)
 	}
 
 	def getDatabaseFiles(aoPath: String): Seq[String] = {
-		new File(aoPath + "cd_image/data/db/").listFiles().collect {
+		val dbDir = new File(aoPath + "cd_image/data/db/")
+		Option(dbDir.listFiles()).map(_.collect {
 			case file: File if file.isFile() && file.getName().startsWith("ResourceDatabase.dat") => file.getCanonicalPath()
-		}
+		}.sorted.toSeq).getOrElse(Seq.empty)
 	}
 }

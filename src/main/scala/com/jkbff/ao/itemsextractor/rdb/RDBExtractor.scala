@@ -1,20 +1,83 @@
 package com.jkbff.ao.itemsextractor.rdb
 
-import java.io.RandomAccessFile
+import java.io.{DataInput, RandomAccessFile}
 
 import com.jkbff.ao.itemsextractor.rdb.RDBFunctions._
 import com.jkbff.ao.itemsextractor.rdb.constants.FunctionSets
 import com.jkbff.ao.itemsextractor.rdb.index.IndexRecord
 
+import org.slf4j.LoggerFactory
 import scala.util.control.Breaks._
 
+class RDBDataInput(bytes: Array[Byte]) extends DataInput {
+	private var pos: Int = 0
+
+	def getFilePointer(): Long = pos.toLong
+	def seek(newPos: Long): Unit = { pos = Math.min(newPos.toInt, bytes.length) }
+	def length(): Long = bytes.length.toLong
+
+	override def readFully(b: Array[Byte]): Unit = readFully(b, 0, b.length)
+	override def readFully(b: Array[Byte], off: Int, len: Int): Unit = {
+		if (len > 0) {
+			if (pos + len > bytes.length) {
+				throw new java.io.EOFException(s"End of item data reached: pos $pos + len $len > ${bytes.length}")
+			}
+			System.arraycopy(bytes, pos, b, off, len)
+			pos += len
+		}
+	}
+
+	override def skipBytes(n: Int): Int = {
+		val skipped = Math.min(n, bytes.length - pos)
+		pos += skipped
+		skipped
+	}
+
+	override def readBoolean(): Boolean = { val v = bytes(pos) != 0; pos += 1; v }
+	override def readByte(): Byte = { val v = bytes(pos); pos += 1; v }
+	override def readUnsignedByte(): Int = { val v = bytes(pos) & 0xFF; pos += 1; v }
+	override def readShort(): Short = {
+		val v = ((bytes(pos) & 0xFF) << 8) | (bytes(pos + 1) & 0xFF)
+		pos += 2
+		v.toShort
+	}
+	override def readUnsignedShort(): Int = {
+		val v = ((bytes(pos) & 0xFF) << 8) | (bytes(pos + 1) & 0xFF)
+		pos += 2
+		v
+	}
+	override def readChar(): Char = readShort().toChar
+	override def readInt(): Int = {
+		val v = ((bytes(pos) & 0xFF) << 24) |
+				((bytes(pos + 1) & 0xFF) << 16) |
+				((bytes(pos + 2) & 0xFF) << 8) |
+				(bytes(pos + 3) & 0xFF)
+		pos += 4
+		v
+	}
+	override def readLong(): Long = {
+		(readInt().toLong << 32) | (readInt().toLong & 0xFFFFFFFFL)
+	}
+	override def readFloat(): Float = java.lang.Float.intBitsToFloat(readInt())
+	override def readDouble(): Double = java.lang.Double.longBitsToDouble(readLong())
+	override def readLine(): String = throw new UnsupportedOperationException
+	override def readUTF(): String = throw new UnsupportedOperationException
+}
+
 class RDBExtractor {
+	private val log = LoggerFactory.getLogger(this.getClass)
+
 	def readItem(in: MultiRandomAccessFile, record: IndexRecord, extractFunctions: Boolean): RDBItem = {
-		val file = in.seek(record.offset)
-		file.skipBytes(2)
+		val raf = in.seek(record.offset)
+		raf.skipBytes(2)
 		
-		val length = readLittleEndianInt(file)
-		val endOffset = file.getFilePointer + length - 6L
+		val length = readLittleEndianInt(raf)
+		val remaining = (length - 6L).toInt
+		val itemBytes = new Array[Byte](remaining)
+		raf.readFully(itemBytes)
+
+		val file = new RDBDataInput(itemBytes)
+		val endOffset = remaining.toLong
 		
 		// taken from: http://aodevs.com/forums/index.php/topic,785.msg3039.html#msg3039
 		file.skipBytes(44)
@@ -33,17 +96,16 @@ class RDBExtractor {
 		var criteriaList: Seq[Criteria] = Seq()
 
 		var oldSetType = -1L
-		val printValues = false
 
 		if (extractFunctions) {
 			breakable {
 				while (endOffset - file.getFilePointer() > 12L) {
 					val setType = readLittleEndianInt(file)
-					if (printValues) println("setType " + setType)
+					//log.debug("setType {}", setType)
 					try {
 						setType match {
 							case 2 =>
-								events = events.+:(processEvent(file, printValues))
+								events = events.+:(processEvent(file))
 
 							case 4 =>
 								attackDefenseList = attackDefense(file)
@@ -79,27 +141,14 @@ class RDBExtractor {
 								unknown1035(file)
 
 							case _ =>
-								if (printValues) {
-									println("record " + record)
-									println("Breaking for setType " + setType)
-									println("Total bytes: " + length)
-									println("Remaining bytes: " + (endOffset - file.getFilePointer))
-									println("Last setType: " + oldSetType)
-								}
-								consumeRemainingBytes(file, endOffset, printValues)
-								if (printValues) println
-								//throw new Exception("halting")
+								log.debug(s"record: $record, Breaking for setType $setType, Total bytes: $length, Remaining bytes: ${endOffset - file.getFilePointer}, Last setType: $oldSetType")
+								consumeRemainingBytes(file, endOffset)
 						}
 						oldSetType = setType
 					} catch {
 						case e: Exception =>
-							println("record " + record)
-							println("Breaking for setType " + setType)
-							println("Total bytes: " + length)
-							println("Remaining bytes: " + (endOffset - file.getFilePointer))
-							println("Last setType: " + oldSetType)
-							consumeRemainingBytes(file, endOffset, printValues)
-							e.printStackTrace()
+							log.debug(s"Failed parsing setType $setType for record $record (last setType: $oldSetType, remaining bytes: ${endOffset - file.getFilePointer})", e)
+							consumeRemainingBytes(file, endOffset)
 					}
 				}
 			}
@@ -107,15 +156,19 @@ class RDBExtractor {
 		RDBItem(record.resourceId, name, description, attributes, attackDefenseList, events.reverse, criteriaList)
 	}
 
-	def consumeRemainingBytes(file: RandomAccessFile, endOffset: Long, printValues: Boolean): Unit = {
-		while (endOffset - file.getFilePointer() >= 4L) {
-			val byte = readLittleEndianInt(file)
-			if (printValues) print(byte + " ")
+	def consumeRemainingBytes(file: RDBDataInput, endOffset: Long): Unit = {
+		if (log.isDebugEnabled) {
+			val remaining = (endOffset - file.getFilePointer).toInt
+			if (remaining > 0) {
+				val b = new Array[Byte](math.min(remaining, (file.length() - file.getFilePointer).toInt))
+				file.readFully(b)
+				log.debug(s"Consumed ${b.length} remaining bytes: ${b.take(64).map(x => "%02x".format(x)).mkString(" ")}")
+			}
 		}
-		if (printValues) println
+		file.seek(math.min(endOffset, file.length()))
 	}
 
-	def parseCriteria(file: RandomAccessFile): Seq[Criteria] = {
+	def parseCriteria(file: RDBDataInput): Seq[Criteria] = {
 		val header = readLittleEndianInt(file)
 		if (header != 36) {
 			//throw new Exception("Expecting '36' for parseCriteria but got: " + header)
@@ -126,33 +179,33 @@ class RDBExtractor {
 		(1L to criteriaCount).map(_ => Criteria(readLittleEndianInt(file), readLittleEndianInt(file), readLittleEndianInt(file)))
 	}
 	
-	def parseAttribute(file: RandomAccessFile): (Long, Long) = {
+	def parseAttribute(file: RDBDataInput): (Long, Long) = {
 		val id = readLittleEndianInt(file)
 		val value = readLittleEndianInt(file)
 		(id, value)
 	}
 	
-	def processEvent(file: RandomAccessFile, printValues: Boolean): Event = {
+	def processEvent(file: RDBDataInput): Event = {
 		val eventNum = readLittleEndianInt(file)
-		if (printValues) println("eventNum", eventNum)
+		//log.debug("eventNum: {}", eventNum)
 		val funcCount = int3F1(readLittleEndianInt(file))
-		if (printValues) println("funcCount", funcCount)
+		//log.debug("funcCount: {}", funcCount)
 
 		val functions = (1L to funcCount).map{ _ =>
 			val functionNum = readLittleEndianInt(file)
-			if (printValues) println("functionNum", functionNum)
+			//log.debug("functionNum: {}", functionNum)
 			file.skipBytes(8) // 0
-			//println(readLittleEndianInt(file))
-			//println(readLittleEndianInt(file))
+			//log.debug("{}", readLittleEndianInt(file))
+			//log.debug("{}", readLittleEndianInt(file))
 			val requirementsCount = readLittleEndianInt(file)
-			//println("requirementsCount", requirementsCount)
+			//log.debug("requirementsCount: {}", requirementsCount)
 			val requirements = (1L to requirementsCount).map { _ =>
 				val requiredAttributeNumber = readLittleEndianInt(file)
 				val requiredAttributeValue = readLittleEndianInt(file)
 				val requiredAttributeOperator = readLittleEndianInt(file)
-				//println("requiredAttributeNumber", requiredAttributeNumber)
-				//println("requiredAttributeValue", requiredAttributeValue)
-				//println("requiredAttributeOperator", requiredAttributeOperator)
+				//log.debug("requiredAttributeNumber: {}", requiredAttributeNumber)
+				//log.debug("requiredAttributeValue: {}", requiredAttributeValue)
+				//log.debug("requiredAttributeOperator: {}", requiredAttributeOperator)
 
 				FunctionRequirement(requiredAttributeNumber, requiredAttributeValue, requiredAttributeOperator)
 			}
@@ -160,13 +213,13 @@ class RDBExtractor {
 			val hits = readLittleEndianInt(file)
 			val delay = readLittleEndianInt(file)
 			val target = readLittleEndianInt(file)
-			//println("FunctionItterationCount", FunctionItterationCount)
-			//println("FunctionItterationDelay", FunctionItterationDelay)
-			//println("FunctionTarget", FunctionTarget)
+			//log.debug("FunctionItterationCount: {}", hits)
+			//log.debug("FunctionItterationDelay: {}", delay)
+			//log.debug("FunctionTarget: {}", target)
 			file.skipBytes(4)
 
 			val functionParams = FunctionSets.getParamsById(functionNum).flatMap { case (num, paramType) =>
-				if (printValues) println(num, paramType)
+				//log.debug(s"param: $num $paramType")
 				paramType match {
 					case "n" =>
 						(1 to num).map { _ =>
@@ -193,7 +246,7 @@ class RDBExtractor {
 		Event(eventNum, functions)
 	}
 
-	def attackDefense(file: RandomAccessFile): Seq[AttackDefense] = {
+	def attackDefense(file: RDBDataInput): Seq[AttackDefense] = {
 		val header = readLittleEndianInt(file)
 		if (header != 4) {
 			//throw new Exception("Expecting '4' for attackDefense but got: " + header)
@@ -211,7 +264,7 @@ class RDBExtractor {
 		}
 	}
 
-	def shop(file: RandomAccessFile): Unit = {
+	def shop(file: RDBDataInput): Unit = {
 		val header = readLittleEndianInt(file)
 		if (header != 37) {
 			throw new Exception("Expecting '37' for shop but got: " + header)
@@ -220,31 +273,31 @@ class RDBExtractor {
 		file.skipBytes(count.toInt * 13)
 	}
 	
-	def unknown5(file: RandomAccessFile): Unit = {
+	def unknown5(file: RDBDataInput): Unit = {
 		// always seem to be 2018 0 0 99
 		file.skipBytes(16)
 	}
 
-	def unknown6(file: RandomAccessFile): Unit = {
+	def unknown6(file: RDBDataInput): Unit = {
 		val header = readLittleEndianInt(file)
 		if (header != 27) {
 			//throw new Exception("Expecting '27' for unknown6 but got: " + header)
 		}
-		//println(readLittleEndianInt(file))
+		//log.debug("{}", readLittleEndianInt(file))
 		val pairs = int3F1(readLittleEndianInt(file))
-		//println("unknown num pairs: " + pairs)
+		//log.debug("unknown num pairs: {}", pairs)
 		file.skipBytes(pairs.toInt * 8)
 		/*(1L to pairs).foreach{ _ =>
-			println("unknown1: " + readLittleEndianInt(file))
-			println("unknown2: " + readLittleEndianInt(file))
+			log.debug("unknown1: " + readLittleEndianInt(file))
+			log.debug("unknown2: " + readLittleEndianInt(file))
 		}*/
 	}
 
-	def unknown19(file: RandomAccessFile): Unit = {
+	def unknown19(file: RDBDataInput): Unit = {
 		file.skipBytes(16)
 	}
 
-	def unknown20(file: RandomAccessFile): Unit = {
+	def unknown20(file: RDBDataInput): Unit = {
 		file.skipBytes(4)
 		val count = int3F1(readLittleEndianInt(file))
 
@@ -257,17 +310,17 @@ class RDBExtractor {
 		}
 	}
 
-	def unknown37(file: RandomAccessFile): Unit = {
+	def unknown37(file: RDBDataInput): Unit = {
 		val count = int3F1(readLittleEndianInt(file))
 		file.skipBytes(4)
 		file.skipBytes(count.toInt * 4 * 4)
 	}
 
-	def unknown1035(file: RandomAccessFile): Unit = {
+	def unknown1035(file: RDBDataInput): Unit = {
 		file.skipBytes(8)
 	}
 
-	def playshiftRequirements(file: RandomAccessFile): Unit = {
+	def playshiftRequirements(file: RDBDataInput): Unit = {
 		val count = int3F1(readLittleEndianInt(file))
 		file.skipBytes(count.toInt * 4 * 3)
 	}

@@ -30,7 +30,7 @@ class Runner (aoPath: String) {
   lazy val h2Ds: BasicDataSource = init(new BasicDataSource()) { ds =>
     ds.setDriverClassName("org.h2.Driver")
     //ds.setUrl("jdbc:h2:mem:db1;IGNORECASE=true")
-    ds.setUrl("jdbc:h2:mem:db1")
+    ds.setUrl("jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1")
     ds.setUsername("")
     ds.setPassword("")
   }
@@ -48,9 +48,9 @@ class Runner (aoPath: String) {
           val nano_id = nano_crystal_item.events(0).functions.find(_.functionNum == 53019).get.params(0).asInstanceOf[Int]
           val nano_record = getIndexRecord(nano_id, IndexRecordType.AODB_NANO_TYPE).get
           val nano_item = rdbExtractor.readItem(db, nano_record, extractFunctions = false)
-          //println(nano_id + ", \"" + nano_item.name + "\"")
+          //log.debug(nano_id + ", \"" + nano_item.name + "\"")
         } catch {
-          case _: NoSuchElementException => println("Could not find record for: " + id)
+          case e: NoSuchElementException => log.warn("Could not find record for: " + id, e)
         }
       }
     }
@@ -82,8 +82,9 @@ class Runner (aoPath: String) {
 	}
 	
 	def getDatabaseFiles(): Seq[String] = {
-		new File(aoPath + "cd_image/data/db/").listFiles().collect {
+		val dbDir = new File(aoPath + "cd_image/data/db/")
+		Option(dbDir.listFiles()).map(_.collect {
 			case file: File if file.isFile() && file.getName().startsWith("ResourceDatabase.dat") => file.getCanonicalPath()
-		}
+		}.sorted.toSeq).getOrElse(Seq.empty)
 	}
 }
